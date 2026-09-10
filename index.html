@@ -1,0 +1,1208 @@
+<title>Bulk Plate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+  :root {
+    --ground: #f3f7f6;
+    --surface: #ffffff;
+    --surface-2: #e9f0ee;
+    --line: #d3dedb;
+    --line-strong: #b5c5c1;
+    --ink: #17221f;
+    --ink-2: #5a6b67;
+    --ink-3: #8a9995;
+    --accent: #1f7a74;
+    --accent-ink: #ffffff;
+    --accent-soft: #d8ecea;
+    --protein: #b5472b;
+    --carbs: #b98a15;
+    --fat: #3d68ae;
+    --protein-soft: #f6e3dd;
+    --carbs-soft: #f5ecd2;
+    --fat-soft: #dfe7f5;
+    --ok: #2f7d4f;
+    --warn: #b06a10;
+    --bad: #b33a2a;
+    --shadow: 0 10px 30px rgba(23, 34, 31, 0.10);
+    --radius: 10px;
+    --display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", sans-serif;
+    --body: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", "Cascadia Mono", Consolas, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0f1615;
+      --surface: #182120;
+      --surface-2: #1f2b29;
+      --line: #2c3a37;
+      --line-strong: #40514d;
+      --ink: #e5eeeb;
+      --ink-2: #9fb0ac;
+      --ink-3: #6f827e;
+      --accent: #48b8ae;
+      --accent-ink: #0d1c1a;
+      --accent-soft: #1b3936;
+      --protein: #e6795b;
+      --carbs: #e0b34a;
+      --fat: #7ea3e6;
+      --protein-soft: #3a231d;
+      --carbs-soft: #372d15;
+      --fat-soft: #1f2a3f;
+      --ok: #5fc384;
+      --warn: #e2a24a;
+      --bad: #ee7b6b;
+      --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0f1615;
+    --surface: #182120;
+    --surface-2: #1f2b29;
+    --line: #2c3a37;
+    --line-strong: #40514d;
+    --ink: #e5eeeb;
+    --ink-2: #9fb0ac;
+    --ink-3: #6f827e;
+    --accent: #48b8ae;
+    --accent-ink: #0d1c1a;
+    --accent-soft: #1b3936;
+    --protein: #e6795b;
+    --carbs: #e0b34a;
+    --fat: #7ea3e6;
+    --protein-soft: #3a231d;
+    --carbs-soft: #372d15;
+    --fat-soft: #1f2a3f;
+    --ok: #5fc384;
+    --warn: #e2a24a;
+    --bad: #ee7b6b;
+    --shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 14px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1, h2, h3 { font-family: var(--display); margin: 0; text-wrap: balance; }
+  button, input, select { font: inherit; color: inherit; }
+  button { cursor: pointer; }
+  button:focus-visible, input:focus-visible, select:focus-visible, [tabindex]:focus-visible {
+    outline: 2px solid var(--accent); outline-offset: 2px;
+  }
+  .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .label { font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-2); font-weight: 600; }
+  .muted { color: var(--ink-2); }
+  .small { font-size: 12px; }
+
+  /* ---------- top bar ---------- */
+  .top {
+    position: sticky; top: 0; z-index: 20;
+    background: var(--surface);
+    border-bottom: 1px solid var(--line);
+  }
+  .top-row {
+    display: flex; align-items: center; gap: 18px; flex-wrap: wrap;
+    padding: 10px 22px;
+    max-width: 1380px; margin: 0 auto;
+  }
+  .brand { display: flex; align-items: baseline; gap: 10px; }
+  .brand h1 { font-size: 22px; font-weight: 800; letter-spacing: -0.01em; }
+  .brand .tag { font-size: 12px; color: var(--ink-2); }
+  .tabs { display: flex; gap: 2px; background: var(--surface-2); padding: 3px; border-radius: 999px; }
+  .tabs button {
+    border: 0; background: transparent; padding: 6px 14px; border-radius: 999px;
+    color: var(--ink-2); font-weight: 500;
+  }
+  .tabs button[aria-selected="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+  .sync { margin-left: auto; font-size: 12px; color: var(--ink-3); display: flex; align-items: center; gap: 6px; }
+  .sync i { width: 7px; height: 7px; border-radius: 50%; background: var(--ink-3); display: inline-block; }
+  .sync.on i { background: var(--ok); }
+
+  .gauges {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+    padding: 0 22px 12px; max-width: 1380px; margin: 0 auto;
+  }
+  .gauge { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: baseline; }
+  .gauge .g-name { font-family: var(--display); font-weight: 700; font-size: 13px; }
+  .gauge .g-val { font-size: 13px; text-align: right; }
+  .gauge .g-val b { font-weight: 500; }
+  .gauge .bar { grid-column: 1 / -1; position: relative; height: 8px; background: var(--surface-2); border-radius: 4px; overflow: hidden; }
+  .gauge .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--g); transition: width 300ms ease; }
+  .gauge .mark { position: absolute; top: -2px; bottom: -2px; width: 2px; background: var(--ink); left: calc(100% / 1.2); opacity: 0.55; }
+  .gauge .g-delta { grid-column: 1 / -1; font-size: 11px; color: var(--ink-2); }
+  .gauge .g-delta.ok { color: var(--ok); }
+  .gauge .g-delta.warn { color: var(--warn); }
+  .gauge .g-delta.bad { color: var(--bad); }
+  .gauge.kcal { --g: var(--accent); }
+  .gauge.protein { --g: var(--protein); }
+  .gauge.carbs { --g: var(--carbs); }
+  .gauge.fat { --g: var(--fat); }
+  @media (prefers-reduced-motion: reduce) { .gauge .fill { transition: none; } }
+
+  main { max-width: 1380px; margin: 0 auto; padding: 18px 22px 60px; }
+  section[hidden] { display: none; }
+
+  /* ---------- plan tab ---------- */
+  .toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 14px; }
+  .toolbar .spacer { flex: 1; }
+  .btn {
+    border: 1px solid var(--line-strong); background: var(--surface); border-radius: 8px;
+    padding: 7px 12px; font-weight: 500; line-height: 1.2;
+  }
+  .btn:hover { border-color: var(--accent); }
+  .btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  .btn.quiet { border-color: transparent; background: transparent; color: var(--ink-2); }
+  .btn.quiet:hover { background: var(--surface-2); color: var(--ink); }
+  .toggle { display: inline-flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+  .toggle .sw { width: 34px; height: 20px; border-radius: 10px; background: var(--line-strong); position: relative; transition: background 150ms; }
+  .toggle .sw::after { content: ""; position: absolute; top: 3px; left: 3px; width: 14px; height: 14px; border-radius: 50%; background: var(--surface); transition: transform 150ms; }
+  .toggle input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .toggle input:checked + .sw { background: var(--accent); }
+  .toggle input:checked + .sw::after { transform: translateX(14px); }
+  .toggle input:focus-visible + .sw { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .plan-grid { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 20px; align-items: start; }
+  .meals { display: grid; gap: 14px; }
+
+  .meal { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); }
+  .meal.over { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+  .meal.active .meal-head h2::after { content: "target"; font: 600 10px/1 var(--body); letter-spacing: 0.08em; text-transform: uppercase; color: var(--accent); margin-left: 10px; vertical-align: middle; }
+  .meal-head { display: flex; align-items: baseline; gap: 12px; padding: 12px 14px 8px; }
+  .meal-head h2 { font-size: 17px; font-weight: 700; cursor: pointer; }
+  .meal-head .totals { margin-left: auto; font-size: 12px; color: var(--ink-2); display: flex; gap: 12px; white-space: nowrap; }
+  .meal-head .totals b { color: var(--ink); font-weight: 500; }
+  .cols, .row {
+    display: grid;
+    grid-template-columns: 22px minmax(0, 1fr) 190px 60px 46px 46px 46px 78px;
+    align-items: center; gap: 6px;
+    padding: 0 10px;
+  }
+  .cols { font-size: 10.5px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; padding-bottom: 4px; border-bottom: 1px solid var(--line); }
+  .cols > span:nth-child(n+4), .row > .num { text-align: right; }
+  .cols .c-p { color: var(--protein); } .cols .c-c { color: var(--carbs); } .cols .c-f { color: var(--fat); }
+  .rows { min-height: 44px; }
+  .row { padding-top: 6px; padding-bottom: 6px; border-bottom: 1px solid var(--line); position: relative; background: var(--surface); }
+  .row:last-child { border-bottom: 0; }
+  .row.dragging { opacity: 0.35; }
+  .row.drop-before::before, .row.drop-after::after {
+    content: ""; position: absolute; left: 8px; right: 8px; height: 3px; background: var(--accent); border-radius: 2px; z-index: 2;
+  }
+  .row.drop-before::before { top: -2px; }
+  .row.drop-after::after { bottom: -2px; }
+  .handle { color: var(--ink-3); cursor: grab; font-size: 16px; line-height: 1; text-align: center; user-select: none; }
+  .row .food { min-width: 0; }
+  .row .food .name { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .row .food .portion { font-size: 11.5px; color: var(--ink-2); }
+  .state { display: inline-block; font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; padding: 1px 5px; border-radius: 3px; background: var(--surface-2); color: var(--ink-2); margin-left: 6px; vertical-align: 1px; }
+  .amount { display: flex; align-items: center; gap: 6px; }
+  .amount input { width: 64px; padding: 4px 6px; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--surface); text-align: right; font-family: var(--mono); }
+  .amount input.locked { border-color: var(--accent); background: var(--accent-soft); }
+  .amount .oz { font-size: 11.5px; color: var(--ink-2); white-space: nowrap; }
+  .row .kcal { font-weight: 500; }
+  .row .p { color: var(--protein); } .row .c { color: var(--carbs); } .row .f { color: var(--fat); }
+  .acts { display: flex; justify-content: flex-end; gap: 2px; }
+  .ib { border: 0; background: transparent; width: 24px; height: 24px; border-radius: 6px; color: var(--ink-3); display: inline-grid; place-items: center; padding: 0; }
+  .ib:hover { background: var(--surface-2); color: var(--ink); }
+  .ib.on { color: var(--accent); }
+  .ib svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+  .meal-foot { display: grid; grid-template-columns: 22px minmax(0,1fr) 190px 60px 46px 46px 46px 78px; gap: 6px; padding: 8px 10px 10px; border-top: 2px solid var(--line-strong); font-weight: 600; }
+  .meal-foot > .num { text-align: right; }
+  .empty { padding: 12px 10px; color: var(--ink-3); font-size: 12.5px; font-style: italic; }
+  .drop-hint { display: none; }
+  body.drag-food .meal .rows { outline: 1.5px dashed var(--line-strong); outline-offset: -4px; border-radius: 6px; }
+  body.drag-food .meal.over .rows { outline-color: var(--accent); }
+
+  /* gap suggestions */
+  .gapcard { background: var(--surface); border: 1px solid var(--line); border-left: 4px solid var(--accent); border-radius: var(--radius); padding: 12px 14px; }
+  .gapcard .gap-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+  .gapcard h2 { font-size: 16px; font-weight: 700; }
+  .gapcard .gap-sum { color: var(--ink-2); font-size: 13px; }
+  .gapcard .gap-sum b { font-weight: 600; color: var(--ink); }
+  .sug { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 4px 14px; align-items: center; padding: 8px 0; border-top: 1px solid var(--line); }
+  .sug .sug-text { font-size: 13.5px; }
+  .sug .sug-text b { font-weight: 600; font-family: var(--mono); }
+  .sug .sug-text .to { color: var(--ink-2); }
+  .sug .sug-text .cut { color: var(--bad); }
+  .sug .sug-res { font-size: 11.5px; color: var(--ink-3); white-space: nowrap; }
+  .gapline { font-size: 12.5px; color: var(--ok); padding: 6px 2px; }
+  .gapline .adj { color: var(--ink-2); margin-left: 10px; }
+  .row.changed .amount input { background: var(--carbs-soft); border-color: var(--carbs); }
+  .row.changed .portion .was { color: var(--carbs); font-weight: 500; margin-left: 6px; }
+  .gapline::before { content: "\2713"; margin-right: 6px; }
+  @media (max-width: 760px) { .sug { grid-template-columns: 1fr; } .sug .btn { justify-self: start; } }
+
+  /* popover menu */
+  .menu { position: absolute; right: 8px; top: 100%; z-index: 30; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: var(--shadow); min-width: 210px; padding: 6px; }
+  .menu .mh { padding: 6px 8px 2px; }
+  .menu button { display: block; width: 100%; text-align: left; border: 0; background: transparent; padding: 6px 8px; border-radius: 6px; }
+  .menu button:hover { background: var(--surface-2); }
+  .menu button small { color: var(--ink-3); float: right; font-family: var(--mono); }
+  .menu hr { border: 0; border-top: 1px solid var(--line); margin: 4px 0; }
+
+  /* ---------- pantry ---------- */
+  .pantry { position: sticky; top: 132px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); display: flex; flex-direction: column; max-height: calc(100vh - 150px); }
+  .pantry-head { padding: 12px 12px 8px; border-bottom: 1px solid var(--line); }
+  .pantry-head h2 { font-size: 16px; font-weight: 700; }
+  .pantry-head p { margin: 2px 0 8px; font-size: 12px; color: var(--ink-2); }
+  .search { width: 100%; padding: 7px 10px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--ground); }
+  .trash { margin: 8px 12px 0; padding: 10px; border: 1.5px dashed var(--line-strong); border-radius: 8px; text-align: center; font-size: 12px; color: var(--ink-2); display: none; }
+  body.drag-item .trash { display: block; }
+  .trash.over { border-color: var(--bad); color: var(--bad); background: var(--protein-soft); }
+  .pantry-body { overflow-y: auto; padding: 8px 12px 12px; }
+  .pgroup { margin-top: 10px; }
+  .pgroup .label { margin-bottom: 6px; display: block; }
+  .chips { display: flex; flex-direction: column; gap: 4px; }
+  .chip { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); cursor: grab; }
+  .chip:hover { border-color: var(--accent); }
+  .chip.dragging { opacity: 0.4; }
+  .chip .cn { font-weight: 500; font-size: 13px; }
+  .chip .cm { font-size: 11px; color: var(--ink-2); font-family: var(--mono); }
+  .chip .add { border: 1px solid var(--line-strong); background: var(--surface); width: 26px; height: 26px; border-radius: 6px; font-weight: 600; color: var(--accent); }
+  .chip .add:hover { background: var(--accent-soft); }
+  .chip .cm span + span::before { content: " · "; color: var(--ink-3); }
+  .addfood { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 10px; }
+  .addfood summary { cursor: pointer; font-weight: 600; font-size: 13px; }
+  .addfood .frm { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: 8px; }
+  .addfood .frm input, .addfood .frm select { width: 100%; padding: 5px 7px; border: 1px solid var(--line-strong); border-radius: 6px; background: var(--surface); }
+  .addfood .frm .full { grid-column: 1 / -1; }
+
+  /* ---------- numbers tab ---------- */
+  .two { display: grid; grid-template-columns: minmax(0, 420px) minmax(0, 1fr); gap: 24px; align-items: start; }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; }
+  .card h2 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+  .card .lede { color: var(--ink-2); font-size: 13px; margin: 0 0 14px; max-width: 60ch; }
+  .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 14px; }
+  .field { display: grid; gap: 4px; }
+  .field.full { grid-column: 1 / -1; }
+  .field input, .field select { padding: 7px 9px; border: 1px solid var(--line-strong); border-radius: 8px; background: var(--surface); width: 100%; }
+  .field input[type=number] { font-family: var(--mono); }
+  .field .hint { font-size: 11.5px; color: var(--ink-3); }
+  .targets { width: 100%; border-collapse: collapse; margin-top: 4px; }
+  .targets th { text-align: left; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--line); }
+  .targets td { padding: 9px 8px; border-bottom: 1px solid var(--line); vertical-align: baseline; }
+  .targets td.big { font-family: var(--display); font-size: 26px; font-weight: 700; text-align: right; }
+  .targets td.big small { font: 500 12px var(--body); color: var(--ink-2); margin-left: 3px; }
+  .targets tr.protein td:first-child { color: var(--protein); font-weight: 600; }
+  .targets tr.carbs td:first-child { color: var(--carbs); font-weight: 600; }
+  .targets tr.fat td:first-child { color: var(--fat); font-weight: 600; }
+  .targets td.how { color: var(--ink-2); font-size: 12.5px; }
+  .explain { margin: 14px 0 0; padding: 12px 14px; background: var(--accent-soft); border-radius: 8px; font-size: 13px; line-height: 1.5; }
+  .explain b { font-weight: 600; }
+  .adjrow { display: flex; align-items: center; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+  .adjrow .big { font-family: var(--display); font-size: 22px; font-weight: 700; min-width: 80px; }
+  .split { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; margin-top: 14px; height: 10px; border-radius: 5px; overflow: hidden; }
+  .split i { display: block; height: 100%; }
+  .split-legend { display: flex; gap: 16px; margin-top: 6px; font-size: 12px; color: var(--ink-2); }
+  .split-legend b { font-weight: 500; color: var(--ink); }
+
+  /* ---------- progress tab ---------- */
+  .three { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 24px; align-items: start; }
+  .stack { display: grid; gap: 20px; }
+  .inline-form { display: flex; gap: 8px; align-items: end; flex-wrap: wrap; margin-bottom: 12px; }
+  .inline-form .field { min-width: 120px; }
+  table.list { width: 100%; border-collapse: collapse; }
+  table.list th { text-align: left; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; padding: 6px 6px; border-bottom: 1px solid var(--line); }
+  table.list td { padding: 7px 6px; border-bottom: 1px solid var(--line); }
+  table.list td.r, table.list th.r { text-align: right; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; font-size: 11.5px; font-weight: 600; }
+  .pill.ok { background: color-mix(in srgb, var(--ok) 18%, transparent); color: var(--ok); }
+  .pill.warn { background: color-mix(in srgb, var(--warn) 18%, transparent); color: var(--warn); }
+  .pill.bad { background: color-mix(in srgb, var(--bad) 18%, transparent); color: var(--bad); }
+  .pill.neutral { background: var(--surface-2); color: var(--ink-2); }
+  .rec { padding: 14px 16px; border-radius: 8px; background: var(--surface-2); margin-bottom: 14px; }
+  .rec h3 { font-size: 20px; font-weight: 800; margin-bottom: 4px; }
+  .rec p { margin: 4px 0; font-size: 13px; }
+  .rec.hold { background: var(--accent-soft); }
+  .rec.up { background: var(--carbs-soft); }
+  .rec.down { background: var(--fat-soft); }
+  .swaps { display: grid; gap: 6px; font-size: 13px; }
+  .swaps div b { font-weight: 600; }
+  .swaps .arrows { color: var(--ink-3); }
+
+  /* ---------- responsive ---------- */
+  @media (max-width: 1100px) {
+    .plan-grid { grid-template-columns: 1fr; }
+    .pantry { position: static; max-height: none; }
+    .pantry-body { max-height: 420px; }
+    .three, .two { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 760px) {
+    .gauges { grid-template-columns: repeat(2, 1fr); }
+    .cols { display: none; }
+    .row, .meal-foot { grid-template-columns: 22px minmax(0,1fr) 78px; grid-template-areas: "h food acts" "h amt macros"; row-gap: 4px; }
+    .row .handle { grid-area: h; }
+    .row .food { grid-area: food; }
+    .row .amount { grid-area: amt; }
+    .row .acts { grid-area: acts; }
+    .row .kcal, .row .p, .row .c, .row .f { grid-area: macros; }
+    .row .p, .row .c, .row .f { display: none; }
+    .meal-foot { grid-template-columns: 22px 1fr 60px; }
+    .meal-foot > .num:not(.kcal) { display: none; }
+  }
+
+  /* ---------- print ---------- */
+  .print-only { display: none; }
+  @media print {
+    body { background: #fff; color: #111; font-size: 11px; }
+    .top, .toolbar, .pantry, .acts, .handle, #tab-numbers, #tab-progress, .cols .c-acts { display: none !important; }
+    main { padding: 0; max-width: none; }
+    .print-only { display: block; margin-bottom: 12px; }
+    .print-only h1 { font-size: 20px; }
+    .plan-grid { grid-template-columns: 1fr; }
+    .meal { break-inside: avoid; border-color: #ccc; margin-bottom: 8px; }
+    .cols, .row, .meal-foot { grid-template-columns: 0 1fr 150px 50px 40px 40px 40px 0; }
+    .amount input { border: 0; padding: 0; background: transparent; }
+    .state { border: 1px solid #ddd; }
+  }
+</style>
+
+<header class="top">
+  <div class="top-row">
+    <div class="brand"><h1>Bulk Plate</h1><span class="tag">macro targets, one plate at a time</span></div>
+    <div class="tabs" role="tablist">
+      <button role="tab" aria-selected="true" data-tab="plan">Today's plate</button>
+      <button role="tab" aria-selected="false" data-tab="numbers">Your numbers</button>
+      <button role="tab" aria-selected="false" data-tab="progress">Check-ins</button>
+    </div>
+    <div class="sync" id="sync"><i></i><span>saved on this device</span></div>
+  </div>
+  <div class="gauges" id="gauges"></div>
+</header>
+
+<main>
+  <section id="tab-plan">
+    <div class="print-only" id="printHead"></div>
+    <div class="toolbar">
+      <label class="toggle" title="After you add, remove, move, or swap a food, portions of unlocked foods are rescaled to hit your targets.">
+        <input type="checkbox" id="autoBalance"><span class="sw"></span><span>Auto-adjust portions after changes</span>
+      </label>
+      <button class="btn" id="balanceNow">Balance now</button>
+      <span class="spacer"></span>
+      <button class="btn quiet" id="unlockAll">Unlock all</button>
+      <button class="btn quiet" id="resetPlan" title="Reload the default six meals, then scale every portion to your current targets">Reset to balanced plan</button>
+      <button class="btn quiet" id="printPlan">Print</button>
+      <button class="btn primary" id="logToday">Log today's plate</button>
+    </div>
+    <div class="plan-grid">
+      <div class="meals" id="meals"></div>
+      <aside class="pantry" id="pantry">
+        <div class="pantry-head">
+          <h2>Pantry</h2>
+          <p>Drag a food onto a meal, or press + to add it to the meal marked <b>target</b> (click a meal name to change it).</p>
+          <input class="search" id="search" type="search" placeholder="Search foods" aria-label="Search foods">
+        </div>
+        <div class="trash" id="trash">Drop here to remove from the day</div>
+        <div class="pantry-body" id="pantryBody"></div>
+      </aside>
+    </div>
+  </section>
+
+  <section id="tab-numbers" hidden>
+    <div class="two">
+      <div class="card">
+        <h2>Your stats</h2>
+        <p class="lede">Lean mass drives protein, bodyweight drives fat, and whatever calories are left become carbs.</p>
+        <div class="fields" id="statsForm">
+          <div class="field"><span class="label">Weight (lb)</span><input type="number" step="0.1" id="s_weight"></div>
+          <div class="field"><span class="label">Body fat (%)</span><input type="number" step="0.1" id="s_bf"></div>
+          <div class="field"><span class="label">BMR (kcal)</span><input type="number" step="1" id="s_bmr" placeholder="auto"><span class="hint">Leave blank to estimate with Katch-McArdle from lean mass.</span></div>
+          <div class="field"><span class="label">Activity</span>
+            <select id="s_activity">
+              <option value="low">Low (x1.35)</option>
+              <option value="moderate">Moderate (x1.5)</option>
+              <option value="high">High (x1.6): 5-day split + 2-3 martial arts</option>
+              <option value="very_high">Very high (x1.7)</option>
+            </select></div>
+          <div class="field"><span class="label">Goal</span>
+            <select id="s_goal">
+              <option value="lean_bulk">Lean bulk (+300)</option>
+              <option value="bulk">Bulk (+500)</option>
+              <option value="maintain">Maintain (0)</option>
+              <option value="cut">Cut (-500)</option>
+            </select></div>
+          <div class="field"><span class="label">Training experience</span>
+            <select id="s_exp">
+              <option value="beginner">Beginner</option>
+              <option value="intermediate">Intermediate</option>
+              <option value="experienced">Experienced</option>
+            </select></div>
+          <div class="field"><span class="label">Protein (g per lb lean)</span><input type="number" step="0.05" id="s_pfac"></div>
+          <div class="field"><span class="label">Fat (g per lb bodyweight)</span><input type="number" step="0.01" id="s_ffac"></div>
+        </div>
+        <div class="adjrow">
+          <span class="label">Check-in adjustment</span>
+          <button class="btn" id="adjMinus">-200</button>
+          <span class="big num" id="adjVal">+0</span>
+          <button class="btn" id="adjPlus">+200</button>
+          <span class="small muted">kcal on top of the goal surplus, set from your weigh-ins</span>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Daily targets</h2>
+        <p class="lede">These are what the plate is balanced against.</p>
+        <table class="targets" id="targets"></table>
+        <div class="split" id="split"></div>
+        <div class="split-legend" id="splitLegend"></div>
+        <div class="explain" id="explain"></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-progress" hidden>
+    <div class="three">
+      <div class="stack">
+        <div class="card">
+          <h2>Weigh-ins</h2>
+          <p class="lede">Morning, after the bathroom, before food. Weekly averages smooth out the noise.</p>
+          <div class="inline-form">
+            <div class="field"><span class="label">Date</span><input type="date" id="w_date"></div>
+            <div class="field"><span class="label">Weight (lb)</span><input type="number" step="0.1" id="w_lb"></div>
+            <button class="btn primary" id="addWeight">Add</button>
+          </div>
+          <table class="list" id="weightList"></table>
+        </div>
+        <div class="card">
+          <h2>Same-macro swaps</h2>
+          <p class="lede">Use the row menu on any food in the plate to swap within its group.</p>
+          <div class="swaps">
+            <div><b>Starch</b> <span class="arrows">rice, sweet potato, pasta, potatoes</span></div>
+            <div><b>Protein</b> <span class="arrows">chicken, turkey, lean beef, fish</span></div>
+            <div><b>Dairy</b> <span class="arrows">Greek yogurt, cottage cheese</span></div>
+            <div><b>Bread</b> <span class="arrows">toast, oats, bagel</span></div>
+            <div class="muted">93/7 turkey in place of 90/10 beef saves about 8 g fat per 100 g.</div>
+          </div>
+        </div>
+      </div>
+      <div class="stack">
+        <div class="card">
+          <h2>Rate of gain</h2>
+          <div id="recBox"></div>
+          <table class="list" id="weekList"></table>
+        </div>
+        <div class="card">
+          <h2>Logged days</h2>
+          <p class="lede">Each time you press "Log today's plate" the day's totals land here, against the targets that day.</p>
+          <table class="list" id="logList"></table>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<script>
+(() => {
+  'use strict';
+
+  /* ================= food database (per 100 g) ================= */
+  // portion: {g, name, plural}; snap: grams multiple the balancer rounds to; flex: [min, max] multiplier of the base portion
+  const FOODS = {
+    eggs:            { name: 'Eggs', state: 'raw', kcal: 143, p: 12.6, c: 0.7, f: 10, role: 'protein', portion: { g: 50, name: 'large', plural: 'large' }, snap: 50, flex: [0.5, 2] },
+    egg_whites:      { name: 'Egg whites', state: 'raw', kcal: 52, p: 10.9, c: 0.7, f: 0.2, role: 'protein', portion: { g: 33, name: 'white', plural: 'whites' }, snap: 33, flex: [0.5, 3] },
+    ww_bread:        { name: 'Whole wheat toast', state: 'as sold', kcal: 282, p: 14, c: 49, f: 3.5, role: 'carb', group: 'bread', portion: { g: 28, name: 'slice', plural: 'slices' }, snap: 28, flex: [0.34, 2] },
+    butter:          { name: 'Butter', state: 'as sold', kcal: 717, p: 0.9, c: 0, f: 81, role: 'fat', portion: { g: 14, name: 'tbsp', plural: 'tbsp' }, snap: 1, flex: [0.5, 1.5] },
+    banana:          { name: 'Banana', state: 'raw', kcal: 89, p: 1.1, c: 23, f: 0.3, role: 'fruit', portion: { g: 118, name: 'medium', plural: 'medium' }, snap: 5, flex: [0.5, 2] },
+    greek_yogurt_nf: { name: 'Nonfat Greek yogurt', state: 'as sold', kcal: 57, p: 10, c: 3.6, f: 0, role: 'dairy', group: 'dairy', portion: { g: 227, name: 'cup', plural: 'cups' }, snap: 5, flex: [0.5, 2] },
+    granola:         { name: 'Granola', state: 'as sold', kcal: 450, p: 11, c: 65, f: 16, role: 'carb', portion: { g: 60, name: '1/2 cup', plural: 'x 1/2 cup' }, snap: 5, flex: [0.4, 2] },
+    honey:           { name: 'Honey', state: 'as sold', kcal: 304, p: 0.3, c: 82, f: 0, role: 'extra', portion: { g: 21, name: 'tbsp', plural: 'tbsp' }, snap: 1, flex: [0.5, 1.5] },
+    chicken_breast:  { name: 'Chicken breast', state: 'raw', kcal: 165, p: 31, c: 0, f: 3.6, role: 'protein', group: 'meat', portion: { g: 113, name: '4 oz portion', plural: 'x 4 oz' }, snap: 5, flex: [0.4, 2.5] },
+    turkey_93_7:     { name: '93/7 ground turkey', state: 'raw', kcal: 150, p: 19, c: 0, f: 8, role: 'protein', group: 'meat', portion: { g: 113, name: '4 oz portion', plural: 'x 4 oz' }, snap: 5, flex: [0.4, 2.5] },
+    beef_90_10:      { name: '90/10 ground beef', state: 'raw', kcal: 176, p: 20, c: 0, f: 10, role: 'protein', group: 'meat', portion: { g: 113, name: '4 oz portion', plural: 'x 4 oz' }, snap: 5, flex: [0.4, 2.5] },
+    salmon:          { name: 'Salmon', state: 'raw', kcal: 208, p: 20, c: 0, f: 13, role: 'protein', group: 'meat', portion: { g: 113, name: '4 oz portion', plural: 'x 4 oz' }, snap: 5, flex: [0.4, 2.5] },
+    tilapia:         { name: 'Tilapia / white fish', state: 'raw', kcal: 96, p: 20, c: 0, f: 1.7, role: 'protein', group: 'meat', portion: { g: 113, name: '4 oz portion', plural: 'x 4 oz' }, snap: 5, flex: [0.4, 2.5] },
+    whey:            { name: 'Whey protein', state: 'as sold', kcal: 400, p: 80, c: 8, f: 6, role: 'protein', portion: { g: 30, name: 'scoop', plural: 'scoops' }, snap: 15, flex: [0.5, 2] },
+    white_rice:      { name: 'White rice', state: 'cooked', kcal: 130, p: 2.7, c: 28, f: 0.3, role: 'carb', group: 'starch', portion: { g: 175, name: 'cup cooked', plural: 'cups cooked' }, snap: 5, flex: [0.3, 2.5] },
+    sweet_potato:    { name: 'Sweet potato', state: 'baked', kcal: 90, p: 2, c: 21, f: 0.1, role: 'carb', group: 'starch', portion: { g: 150, name: 'medium', plural: 'medium' }, snap: 5, flex: [0.3, 2.5] },
+    pasta:           { name: 'Pasta', state: 'cooked', kcal: 158, p: 5.8, c: 31, f: 0.9, role: 'carb', group: 'starch', portion: { g: 140, name: 'cup cooked', plural: 'cups cooked' }, snap: 5, flex: [0.3, 2.5] },
+    potato:          { name: 'Potato', state: 'baked', kcal: 93, p: 2.5, c: 21, f: 0.1, role: 'carb', group: 'starch', portion: { g: 173, name: 'medium', plural: 'medium' }, snap: 5, flex: [0.3, 2.5] },
+    oats:            { name: 'Rolled oats', state: 'dry', kcal: 389, p: 16.9, c: 66, f: 6.9, role: 'carb', group: 'bread', portion: { g: 40, name: '1/2 cup dry', plural: 'x 1/2 cup dry' }, snap: 5, flex: [0.4, 2.5] },
+    bagel:           { name: 'Bagel', state: 'as sold', kcal: 250, p: 10, c: 49, f: 1.5, role: 'carb', group: 'bread', portion: { g: 105, name: 'bagel', plural: 'bagels' }, snap: 5, flex: [0.5, 2] },
+    tortilla:        { name: 'Flour tortilla', state: 'as sold', kcal: 312, p: 8, c: 50, f: 8, role: 'carb', portion: { g: 45, name: 'tortilla', plural: 'tortillas' }, snap: 45, flex: [0.5, 3] },
+    black_beans:     { name: 'Black beans', state: 'cooked', kcal: 132, p: 8.9, c: 24, f: 0.5, role: 'carb', portion: { g: 172, name: 'cup', plural: 'cups' }, snap: 5, flex: [0.4, 2] },
+    green_veg:       { name: 'Green veggies (broccoli)', state: 'raw', kcal: 34, p: 2.8, c: 7, f: 0.4, role: 'veg', portion: { g: 90, name: 'cup', plural: 'cups' }, snap: 5, flex: [0.6, 1.8] },
+    apple:           { name: 'Apple', state: 'raw', kcal: 52, p: 0.3, c: 14, f: 0.2, role: 'fruit', portion: { g: 182, name: 'medium', plural: 'medium' }, snap: 5, flex: [0.5, 2] },
+    berries:         { name: 'Mixed berries', state: 'raw', kcal: 57, p: 0.7, c: 14, f: 0.3, role: 'fruit', portion: { g: 150, name: 'cup', plural: 'cups' }, snap: 5, flex: [0.5, 2] },
+    teriyaki:        { name: 'Sauce (teriyaki / BBQ)', state: 'as sold', kcal: 166, p: 1, c: 40, f: 0, role: 'extra', portion: { g: 15, name: 'tbsp', plural: 'tbsp' }, snap: 1, flex: [0.5, 1.5] },
+    cottage_2pct:    { name: 'Cottage cheese (2%)', state: 'as sold', kcal: 84, p: 11, c: 3.5, f: 2.3, role: 'dairy', group: 'dairy', portion: { g: 226, name: 'cup', plural: 'cups' }, snap: 5, flex: [0.5, 2] },
+    whole_milk:      { name: 'Whole milk', state: 'as sold', kcal: 61, p: 3.2, c: 4.8, f: 3.3, role: 'dairy', portion: { g: 244, name: 'cup', plural: 'cups' }, snap: 5, flex: [0.5, 2] },
+    peanut_butter:   { name: 'Peanut butter', state: 'as sold', kcal: 588, p: 25, c: 20, f: 50, role: 'fat', portion: { g: 16, name: 'tbsp', plural: 'tbsp' }, snap: 1, flex: [0.5, 2] },
+    olive_oil:       { name: 'Olive oil', state: 'as sold', kcal: 884, p: 0, c: 0, f: 100, role: 'fat', portion: { g: 14, name: 'tbsp', plural: 'tbsp' }, snap: 1, flex: [0.5, 1.5] },
+    avocado:         { name: 'Avocado', state: 'raw', kcal: 160, p: 2, c: 9, f: 15, role: 'fat', portion: { g: 100, name: 'half', plural: 'halves' }, snap: 5, flex: [0.5, 2] },
+    almonds:         { name: 'Almonds', state: 'as sold', kcal: 579, p: 21, c: 22, f: 50, role: 'fat', portion: { g: 28, name: 'oz handful', plural: 'oz' }, snap: 1, flex: [0.5, 2] },
+  };
+  const ROLE_ORDER = [
+    ['protein', 'Protein'], ['carb', 'Carbs and starch'], ['dairy', 'Dairy'], ['fruit', 'Fruit'],
+    ['veg', 'Vegetables'], ['fat', 'Fats'], ['extra', 'Sauces and sweeteners'], ['custom', 'Your foods'],
+  ];
+  const GROUPS = { starch: 'Starch', meat: 'Protein', dairy: 'Dairy', bread: 'Bread' };
+
+  const DEFAULT_MEALS = [
+    ['Breakfast',   [['eggs', 150], ['ww_bread', 85], ['butter', 7], ['banana', 120]]],
+    ['Mid-morning', [['greek_yogurt_nf', 227], ['granola', 100], ['honey', 21]]],
+    ['Lunch',       [['chicken_breast', 142], ['white_rice', 350], ['green_veg', 150], ['teriyaki', 30]]],
+    ['Pre-workout', [['cottage_2pct', 226], ['sweet_potato', 250]]],
+    ['Dinner',      [['beef_90_10', 170], ['white_rice', 350], ['green_veg', 150]]],
+    ['Before bed',  [['cottage_2pct', 226], ['peanut_butter', 32]]],
+  ];
+  const ACTIVITY = { low: 1.35, moderate: 1.5, high: 1.6, very_high: 1.7 };
+  const SURPLUS = { lean_bulk: 300, bulk: 500, maintain: 0, cut: -500 };
+  const GAIN_RANGE = { experienced: [0.5, 1.0], intermediate: [0.75, 1.25], beginner: [1.0, 1.5] };
+
+  /* ================= state ================= */
+  const LS_KEY = 'bulkplate.v1';
+  let uid = 0;
+  const nid = () => 'i' + Date.now().toString(36) + (uid++).toString(36);
+
+  function defaultMeals() {
+    return DEFAULT_MEALS.map(([name, items]) => ({
+      id: name.toLowerCase().replace(/[^a-z]/g, ''), name,
+      items: items.map(([key, grams]) => ({ id: nid(), key, grams, base: grams, locked: false })),
+    }));
+  }
+  function defaultState() {
+    return {
+      version: 1, updatedAt: '',
+      stats: { weight_lb: 212.4, body_fat_pct: 16.4, bmr_kcal: 2109, activity: 'high', goal: 'lean_bulk', experience: 'experienced', pfac: 1.1, ffac: 0.42 },
+      kcalAdjust: 0, autoBalance: true, activeMeal: 'breakfast',
+      meals: defaultMeals(), weights: [], logs: [], customFoods: {},
+    };
+  }
+  let state = defaultState();
+  const clone = (o) => JSON.parse(JSON.stringify(o));
+
+  function loadLocal() {
+    try { const raw = localStorage.getItem(LS_KEY); return raw ? JSON.parse(raw) : null; } catch (e) { return null; }
+  }
+  function saveLocal() { try { localStorage.setItem(LS_KEY, JSON.stringify(state)); } catch (e) {} }
+  function adopt(d) {
+    const s = defaultState();
+    if (d && typeof d === 'object') {
+      Object.assign(s.stats, d.stats || {});
+      for (const k of ['kcalAdjust', 'autoBalance', 'activeMeal', 'updatedAt']) if (d[k] !== undefined) s[k] = d[k];
+      if (Array.isArray(d.meals)) s.meals = d.meals;
+      if (Array.isArray(d.weights)) s.weights = d.weights;
+      if (Array.isArray(d.logs)) s.logs = d.logs;
+      if (d.customFoods) s.customFoods = d.customFoods;
+    }
+    return s;
+  }
+
+  // remote sync through the artifact db when the page runs inside claude.ai
+  let dbDoc = null, pushTimer = null;
+  function persist() {
+    state.updatedAt = new Date().toISOString();
+    saveLocal();
+    if (dbDoc) {
+      clearTimeout(pushTimer);
+      pushTimer = setTimeout(() => dbDoc.set(clone(state)).catch(() => {}), 500);
+    }
+  }
+  async function connectDb() {
+    if (!window.claude || typeof window.claude.use !== 'function') return;
+    let db = null;
+    try { db = await window.claude.use('db'); } catch (e) { db = null; }
+    if (!db) return;
+    dbDoc = db.doc('planner/state');
+    dbDoc.onSnapshot((snap) => {
+      if (snap.metadata && snap.metadata.hasPendingWrites) return;
+      if (!snap.exists) { dbDoc.set(clone(state)).catch(() => {}); setSync(true); return; }
+      const d = snap.data();
+      if (d.updatedAt && d.updatedAt > (state.updatedAt || '')) {
+        state = adopt(d); saveLocal(); renderAll();
+      } else if ((state.updatedAt || '') > (d.updatedAt || '')) {
+        dbDoc.set(clone(state)).catch(() => {});
+      }
+      setSync(true);
+    }, () => { dbDoc = null; setSync(false); });
+  }
+  function setSync(on) {
+    const el = document.getElementById('sync');
+    el.classList.toggle('on', on);
+    el.querySelector('span').textContent = on ? 'synced to your account' : 'saved on this device';
+  }
+
+  /* ================= math ================= */
+  const food = (key) => FOODS[key] || state.customFoods[key];
+  const allFoods = () => Object.assign({}, FOODS, state.customFoods);
+  const r = Math.round;
+  const OZ = 28.349523125;
+
+  function macrosOf(key, grams) {
+    const f = food(key); if (!f) return { kcal: 0, p: 0, c: 0, f: 0 };
+    const k = grams / 100;
+    // rounding rule from the brief: round each food to whole numbers first, then sum
+    return { kcal: r(f.kcal * k), p: r(f.p * k), c: r(f.c * k), f: r(f.f * k) };
+  }
+  function mealTotals(meal) {
+    return meal.items.reduce((t, it) => { const m = macrosOf(it.key, it.grams); t.kcal += m.kcal; t.p += m.p; t.c += m.c; t.f += m.f; return t; }, { kcal: 0, p: 0, c: 0, f: 0 });
+  }
+  function dayTotals() {
+    return state.meals.reduce((t, m) => { const x = mealTotals(m); t.kcal += x.kcal; t.p += x.p; t.c += x.c; t.f += x.f; return t; }, { kcal: 0, p: 0, c: 0, f: 0 });
+  }
+  function targets() {
+    const s = state.stats;
+    const w = +s.weight_lb || 0, bf = +s.body_fat_pct || 0;
+    const lean_lb = w * (1 - bf / 100);
+    const lean_kg = lean_lb * 0.45359237;
+    const bmrAuto = r(370 + 21.6 * lean_kg);
+    const bmr = s.bmr_kcal ? +s.bmr_kcal : bmrAuto;
+    const mult = ACTIVITY[s.activity] || 1.5;
+    const tdee = bmr * mult;
+    const surplus = SURPLUS[s.goal] || 0;
+    const kcal = r((tdee + surplus) / 50) * 50 + (+state.kcalAdjust || 0);
+    const p = r(lean_lb * (+s.pfac || 1.1));
+    const f = r(w * (+s.ffac || 0.42));
+    const c = r((kcal - p * 4 - f * 9) / 4);
+    return { lean_lb, lean_kg, bmr, bmrAuto, bmrIsAuto: !s.bmr_kcal, mult, tdee, surplus, kcal, p, c, f };
+  }
+
+  /* ================= balancer ================= */
+  // Coordinate descent on grams of every unlocked food: minimise relative squared error on P, C, F
+  // plus a small pull toward each food's base portion so the plate still looks like the plan you built.
+  function balance() {
+    const T = targets();
+    const items = [];
+    state.meals.forEach((m) => m.items.forEach((it) => { if (food(it.key)) items.push(it); }));
+    const free = items.filter((it) => !it.locked);
+    if (!free.length) return;
+    const wP = 1 / (T.p * T.p), wC = 1 / (T.c * T.c), wF = 1 / (T.f * T.f);
+    const lam = 0.015;
+    const g = free.map((it) => it.grams);
+    const a = free.map((it) => { const f = food(it.key); return [f.p / 100, f.c / 100, f.f / 100]; });
+    const lo = free.map((it) => Math.max(1, it.base * food(it.key).flex[0]));
+    const hi = free.map((it) => it.base * food(it.key).flex[1]);
+    let fixed = [0, 0, 0];
+    items.filter((it) => it.locked).forEach((it) => { const f = food(it.key); fixed[0] += f.p * it.grams / 100; fixed[1] += f.c * it.grams / 100; fixed[2] += f.f * it.grams / 100; });
+    const W = [wP, wC, wF], TT = [T.p, T.c, T.f];
+    for (let pass = 0; pass < 80; pass++) {
+      const tot = [fixed[0], fixed[1], fixed[2]];
+      for (let i = 0; i < g.length; i++) for (let m = 0; m < 3; m++) tot[m] += a[i][m] * g[i];
+      for (let i = 0; i < g.length; i++) {
+        const b = free[i].base;
+        let num = lam / b, den = lam / (b * b);
+        for (let m = 0; m < 3; m++) {
+          const R = tot[m] - a[i][m] * g[i] - TT[m];
+          num += -W[m] * a[i][m] * R;
+          den += W[m] * a[i][m] * a[i][m];
+        }
+        const ng = Math.min(hi[i], Math.max(lo[i], num / den));
+        for (let m = 0; m < 3; m++) tot[m] += a[i][m] * (ng - g[i]);
+        g[i] = ng;
+      }
+    }
+    free.forEach((it, i) => {
+      const snap = food(it.key).snap || 5;
+      it.grams = Math.max(snap, r(g[i] / snap) * snap);
+    });
+    polish(free, T);
+  }
+  // Greedy finish on the real, rounded day totals: move one food one snap step at a time
+  // (within its flex range) whenever that lowers the calorie-weighted miss. Closes the last few grams.
+  function polish(free, T) {
+    const W = [16, 16, 81];
+    const err = () => { const D = dayTotals(); return W[0] * (D.p - T.p) ** 2 + W[1] * (D.c - T.c) ** 2 + W[2] * (D.f - T.f) ** 2; };
+    let cur = err();
+    for (let step = 0; step < 80 && cur > 0; step++) {
+      let best = null;
+      for (const it of free) {
+        const f = food(it.key), snap = f.snap || 5;
+        const lo = Math.max(snap, it.base * f.flex[0]), hi = it.base * f.flex[1];
+        for (const d of [snap, -snap]) {
+          const ng = it.grams + d;
+          if (ng < lo - 1e-9 || ng > hi + 1e-9) continue;
+          const old = it.grams; it.grams = ng; const e = err(); it.grams = old;
+          if (e < cur - 1e-9 && (!best || e < best.e)) best = { it, ng, e };
+        }
+      }
+      if (!best) break;
+      best.it.grams = best.ng; cur = best.e;
+    }
+  }
+  let lastChanges = {}; // itemId -> grams before the last auto-adjust, shown on the rows it touched
+  function trackedBalance() {
+    const before = {};
+    state.meals.forEach((m) => m.items.forEach((it) => { before[it.id] = it.grams; }));
+    balance();
+    lastChanges = {};
+    state.meals.forEach((m) => m.items.forEach((it) => { if (before[it.id] !== undefined && before[it.id] !== it.grams) lastChanges[it.id] = before[it.id]; }));
+  }
+  function afterChange() {
+    lastChanges = {};
+    if (state.autoBalance) trackedBalance();
+    persist(); renderAll();
+  }
+
+  /* ================= gap suggestions ================= */
+  // Reads what the day is still missing (or over) per macro and searches combinations of 1 to 3 foods
+  // whose amounts close it. Foods already on the plate are preferred; a few pantry staples fill in.
+  const STAPLES = ['chicken_breast', 'egg_whites', 'whey', 'tilapia', 'greek_yogurt_nf', 'white_rice', 'sweet_potato', 'banana', 'oats', 'honey', 'peanut_butter', 'olive_oil', 'almonds', 'avocado'];
+  let lastSuggestions = [];
+  const addCap = (f) => (f.role === 'extra' || f.role === 'fat') ? f.portion.g * 2 : Math.max(f.portion.g * 3, 300);
+  function gapSuggestions() {
+    const T = targets(), D = dayTotals();
+    const gap = [T.p - D.p, T.c - D.c, T.f - D.f];
+    if (gap.every((x) => Math.abs(x) < 4)) return { gap, list: [] };
+    const cands = [];
+    state.meals.forEach((m) => m.items.forEach((it) => {
+      const f = food(it.key); if (!f) return;
+      const prev = cands.find((c) => c.key === it.key);
+      if (prev) { if (it.grams > prev.grams) { prev.item = it; prev.meal = m; prev.grams = it.grams; prev.lo = -Math.round(it.grams * 0.6); } return; }
+      cands.push({ key: it.key, item: it, meal: m, grams: it.grams, lo: -Math.round(it.grams * 0.6), hi: addCap(f), existing: true });
+    }));
+    STAPLES.forEach((k) => { if (food(k) && !cands.some((c) => c.key === k)) cands.push({ key: k, grams: 0, lo: 0, hi: addCap(food(k)), existing: false }); });
+    const A = cands.map((c) => { const f = food(c.key); return [f.p / 100, f.c / 100, f.f / 100]; });
+    const W = [16, 16, 81]; // squared kcal per gram, so errors are judged in calories
+    const n = cands.length, combos = [];
+    for (let i = 0; i < n; i++) { combos.push([i]); for (let j = i + 1; j < n; j++) { combos.push([i, j]); for (let k = j + 1; k < n; k++) combos.push([i, j, k]); } }
+    const results = [];
+    for (const idx of combos) {
+      const g = idx.map(() => 0);
+      for (let pass = 0; pass < 30; pass++) {
+        for (let a = 0; a < idx.length; a++) {
+          let num = 0, den = 0;
+          for (let m = 0; m < 3; m++) {
+            let R = -gap[m];
+            for (let b = 0; b < idx.length; b++) if (b !== a) R += A[idx[b]][m] * g[b];
+            num += -W[m] * A[idx[a]][m] * R; den += W[m] * A[idx[a]][m] * A[idx[a]][m];
+          }
+          const c = cands[idx[a]];
+          g[a] = den ? Math.min(c.hi, Math.max(c.lo, num / den)) : 0;
+        }
+      }
+      let ok = true;
+      const parts = idx.map((ci, a) => {
+        const c = cands[ci], snap = food(c.key).snap || 5;
+        const v = Math.round(g[a] / snap) * snap;
+        if (Math.abs(v) < Math.max(snap, 10)) ok = false; // every food in the combo has to pull its weight
+        return { cand: c, ci, delta: v };
+      });
+      if (!ok) continue;
+      const res = [0, 1, 2].map((m) => parts.reduce((s, p) => s + A[p.ci][m] * p.delta, 0) - gap[m]);
+      const err = Math.sqrt(W[0] * res[0] ** 2 + W[1] * res[1] ** 2 + W[2] * res[2] ** 2);
+      const cost = err + 30 * (parts.length - 1) + parts.reduce((s, p) => s + (p.cand.existing ? 0 : 15) + (p.delta < 0 ? 20 : 0), 0);
+      results.push({ parts, res, err, cost });
+    }
+    results.sort((a, b) => a.cost - b.cost);
+    return { gap, list: results.slice(0, 3) };
+  }
+  function gapText(gap) {
+    const names = ['protein', 'carbs', 'fat'];
+    const bits = gap.map((v, i) => Math.abs(v) < 4 ? null : `<b>${Math.abs(Math.round(v))} g</b> ${names[i]} ${v > 0 ? 'short' : 'over'}`).filter(Boolean);
+    return bits.join(', ');
+  }
+  function renderGapCard() {
+    const { gap, list } = gapSuggestions();
+    lastSuggestions = list;
+    const n = Object.keys(lastChanges).length;
+    const adj = n ? `<span class="adj">Auto-adjust moved ${n} portion${n === 1 ? '' : 's'} to hold your targets; they are marked in amber.</span>` : '';
+    if (!list.length) return gap.every((x) => Math.abs(x) < 4) ? `<div class="gapline">Plate is within 4 g of every target.${adj}</div>` : `<div class="gapcard"><div class="gap-head"><h2>Close the gap</h2><span class="gap-sum">${gapText(gap)}. No clean fix with the pantry staples; try adding a food and pressing Balance now.</span></div></div>`;
+    const target = findMeal(state.activeMeal) || state.meals[0];
+    const rows = list.map((s, i) => {
+      const txt = s.parts.map((p) => {
+        const f = food(p.cand.key);
+        const where = p.cand.existing ? p.cand.meal.name : target.name;
+        return p.delta > 0
+          ? `Add <b>${p.delta} g</b> ${esc(f.name)} <span class="to">(${esc(f.state)}, ${oz(p.delta)} oz) to ${esc(where)}</span>`
+          : `<span class="cut">Trim <b>${-p.delta} g</b></span> ${esc(f.name)} <span class="to">from ${esc(where)}</span>`;
+      }).join(' &nbsp;+&nbsp; ');
+      const names = ['P', 'C', 'F'];
+      const left = s.res.map((v, m) => Math.abs(Math.round(v)) < 2 ? null : `${names[m]} ${Math.round(v) > 0 ? '+' : ''}${Math.round(v)}`).filter(Boolean);
+      return `<div class="sug"><div class="sug-text">${txt}</div><span class="sug-res">${left.length ? 'leaves ' + left.join(', ') : 'lands on target'}</span><button class="btn" data-apply="${i}">Apply</button></div>`;
+    }).join('');
+    return `<div class="gapcard"><div class="gap-head"><h2>Close the gap</h2><span class="gap-sum">${gapText(gap)}. New foods go to <b>${esc(target.name)}</b>; click another meal name to change that.</span></div>${rows}</div>`;
+  }
+  function applySuggestion(i) {
+    const s = lastSuggestions[i]; if (!s) return;
+    const target = findMeal(state.activeMeal) || state.meals[0];
+    s.parts.forEach((p) => {
+      if (p.cand.existing) {
+        const it = p.cand.item, m = p.cand.meal;
+        it.grams = Math.max(0, it.grams + p.delta);
+        if (it.grams === 0) m.items.splice(m.items.indexOf(it), 1);
+        else { it.base = it.grams; it.locked = true; }
+      } else if (p.delta > 0) {
+        target.items.push({ id: nid(), key: p.cand.key, grams: p.delta, base: p.delta, locked: true });
+      }
+    });
+    persist(); renderAll();
+  }
+
+  /* ================= formatting ================= */
+  const fmt = (n) => (Math.round(n)).toLocaleString('en-US');
+  const oz = (g) => (g / OZ).toFixed(1);
+  function portionText(key, grams) {
+    const f = food(key); if (!f || !f.portion) return '';
+    const n = grams / f.portion.g;
+    if (n < 0.2 || n > 24) return '';
+    const near = Math.round(n);
+    const shown = Math.abs(n - near) < 0.08 ? String(near) : n.toFixed(1);
+    const word = (shown === '1') ? f.portion.name : f.portion.plural;
+    return `${shown} ${word}`;
+  }
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+
+  /* ================= render: gauges ================= */
+  function renderGauges() {
+    const T = targets(), D = dayTotals();
+    const rows = [['kcal', 'Calories', D.kcal, T.kcal, ''], ['protein', 'Protein', D.p, T.p, ' g'], ['carbs', 'Carbs', D.c, T.c, ' g'], ['fat', 'Fat', D.f, T.f, ' g']];
+    document.getElementById('gauges').innerHTML = rows.map(([cls, name, v, t, unit]) => {
+      const pct = t > 0 ? Math.min(1.2, v / t) / 1.2 * 100 : 0;
+      const d = v - t, rel = t ? Math.abs(d) / t : 0;
+      const tone = rel <= 0.04 ? 'ok' : rel <= 0.1 ? 'warn' : 'bad';
+      const txt = d === 0 ? 'on target' : (d > 0 ? `${fmt(d)}${unit} over` : `${fmt(-d)}${unit} under`);
+      return `<div class="gauge ${cls}"><span class="g-name">${name}</span><span class="g-val num"><b>${fmt(v)}</b> <span class="muted">/ ${fmt(t)}${unit}</span></span><div class="bar"><div class="fill" style="width:${pct}%"></div><div class="mark"></div></div><span class="g-delta ${tone}">${txt}</span></div>`;
+    }).join('');
+    const ph = document.getElementById('printHead');
+    ph.innerHTML = `<h1>Bulk Plate</h1><div>Targets: ${fmt(T.kcal)} kcal, ${T.p} g protein, ${T.c} g carbs, ${T.f} g fat. Plate: ${fmt(D.kcal)} kcal, ${D.p} P, ${D.c} C, ${D.f} F. Printed ${today()}.</div>`;
+  }
+
+  /* ================= render: meals ================= */
+  const ICON = {
+    lock: '<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>',
+    unlock: '<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg>',
+    more: '<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg>',
+    x: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+  };
+  function renderMeals() {
+    const host = document.getElementById('meals');
+    host.innerHTML = renderGapCard() + state.meals.map((m) => {
+      const t = mealTotals(m);
+      const rows = m.items.map((it) => {
+        const f = food(it.key); if (!f) return '';
+        const mm = macrosOf(it.key, it.grams);
+        const por = portionText(it.key, it.grams);
+        const was = lastChanges[it.id];
+        return `<div class="row ${was !== undefined ? 'changed' : ''}" draggable="true" data-meal="${m.id}" data-item="${it.id}">
+          <span class="handle" aria-hidden="true">&#x2807;</span>
+          <div class="food"><div class="name">${esc(f.name)}<span class="state">${esc(f.state)}</span></div><div class="portion">${por}${was !== undefined ? `<span class="was">was ${was} g</span>` : ''}</div></div>
+          <div class="amount"><input type="number" min="0" step="1" value="${it.grams}" class="${it.locked ? 'locked' : ''}" aria-label="grams of ${esc(f.name)}" data-grams="${it.id}"><span class="oz num">g / ${oz(it.grams)} oz</span></div>
+          <span class="num kcal">${mm.kcal}</span><span class="num p">${mm.p}</span><span class="num c">${mm.c}</span><span class="num f">${mm.f}</span>
+          <div class="acts">
+            <button class="ib ${it.locked ? 'on' : ''}" data-act="lock" title="${it.locked ? 'Unlock: let auto-adjust change this portion' : 'Lock this portion'}" aria-label="lock">${it.locked ? ICON.lock : ICON.unlock}</button>
+            <button class="ib" data-act="menu" title="Swap or move" aria-label="swap or move">${ICON.more}</button>
+            <button class="ib" data-act="remove" title="Remove" aria-label="remove">${ICON.x}</button>
+          </div></div>`;
+      }).join('');
+      return `<article class="meal ${m.id === state.activeMeal ? 'active' : ''}" data-meal="${m.id}">
+        <div class="meal-head"><h2 data-pick="${m.id}" title="Make this the target meal for pantry + buttons">${esc(m.name)}</h2>
+          <div class="totals"><span><b class="num">${fmt(t.kcal)}</b> kcal</span><span>P <b class="num">${t.p}</b></span><span>C <b class="num">${t.c}</b></span><span>F <b class="num">${t.f}</b></span></div></div>
+        <div class="cols"><span></span><span>Food</span><span>Amount</span><span>kcal</span><span class="c-p">P</span><span class="c-c">C</span><span class="c-f">F</span><span class="c-acts"></span></div>
+        <div class="rows">${rows || '<div class="empty">Nothing here yet. Drag a food in from the pantry.</div>'}</div>
+        <div class="meal-foot"><span></span><span>Total</span><span></span><span class="num kcal">${fmt(t.kcal)}</span><span class="num">${t.p}</span><span class="num">${t.c}</span><span class="num">${t.f}</span><span></span></div>
+      </article>`;
+    }).join('');
+  }
+
+  /* ================= render: pantry ================= */
+  function renderPantry() {
+    const q = (document.getElementById('search').value || '').trim().toLowerCase();
+    const foods = allFoods();
+    const byRole = {};
+    Object.entries(foods).forEach(([key, f]) => {
+      if (q && !(f.name.toLowerCase().includes(q) || f.state.toLowerCase().includes(q))) return;
+      (byRole[f.role] = byRole[f.role] || []).push([key, f]);
+    });
+    const html = ROLE_ORDER.filter(([role]) => byRole[role]).map(([role, title]) => `<div class="pgroup"><span class="label">${title}</span><div class="chips">${
+      byRole[role].map(([key, f]) => {
+        const m = macrosOf(key, f.portion.g);
+        return `<div class="chip" draggable="true" data-food="${key}" title="Per 100 g: ${f.kcal} kcal, ${f.p} P, ${f.c} C, ${f.f} F">
+          <div><div class="cn">${esc(f.name)}<span class="state">${esc(f.state)}</span></div><div class="cm"><span>1 ${esc(f.portion.name)} = ${f.portion.g} g</span><span>${m.kcal} kcal</span><span style="color:var(--protein)">${m.p}P</span><span style="color:var(--carbs)">${m.c}C</span><span style="color:var(--fat)">${m.f}F</span></div></div>
+          <button class="add" data-add="${key}" aria-label="Add ${esc(f.name)} to the target meal">+</button></div>`;
+      }).join('')}</div></div>`).join('');
+    document.getElementById('pantryBody').innerHTML = (html || '<p class="muted small">No food matches.</p>') + `
+      <details class="addfood"><summary>Add your own food (per 100 g)</summary>
+        <div class="frm" id="cfForm">
+          <input class="full" id="cf_name" placeholder="Name (e.g. Protein pancake mix)">
+          <select id="cf_state"><option>as sold</option><option>raw</option><option>cooked</option></select>
+          <select id="cf_role"><option value="protein">Protein</option><option value="carb">Carb</option><option value="dairy">Dairy</option><option value="fruit">Fruit</option><option value="veg">Vegetable</option><option value="fat">Fat</option><option value="extra">Extra</option></select>
+          <input id="cf_kcal" type="number" placeholder="kcal"><input id="cf_p" type="number" step="0.1" placeholder="protein g">
+          <input id="cf_c" type="number" step="0.1" placeholder="carbs g"><input id="cf_f" type="number" step="0.1" placeholder="fat g">
+          <input id="cf_pg" type="number" placeholder="portion g (e.g. 40)"><input id="cf_pn" placeholder="portion name (e.g. scoop)">
+          <button class="btn full" id="cf_save">Save to pantry</button>
+        </div></details>`;
+  }
+
+  /* ================= render: numbers ================= */
+  function renderNumbers() {
+    const s = state.stats, T = targets();
+    const set = (id, v) => { const el = document.getElementById(id); if (document.activeElement !== el) el.value = v; };
+    set('s_weight', s.weight_lb); set('s_bf', s.body_fat_pct); set('s_bmr', s.bmr_kcal || '');
+    set('s_activity', s.activity); set('s_goal', s.goal); set('s_exp', s.experience); set('s_pfac', s.pfac); set('s_ffac', s.ffac);
+    document.getElementById('s_bmr').placeholder = `auto: ${fmt(T.bmrAuto)}`;
+    document.getElementById('adjVal').textContent = (state.kcalAdjust >= 0 ? '+' : '') + state.kcalAdjust;
+    const pk = T.p * 4, ck = T.c * 4, fk = T.f * 9, tot = pk + ck + fk || 1;
+    document.getElementById('targets').innerHTML = `
+      <tr><th>Target</th><th class="r">Per day</th><th>How</th></tr>
+      <tr><td>Calories</td><td class="big num">${fmt(T.kcal)}<small>kcal</small></td><td class="how">maintenance ${fmt(T.tdee)} ${T.surplus >= 0 ? '+' : '-'} ${Math.abs(T.surplus)} surplus, rounded to 50${state.kcalAdjust ? `, ${state.kcalAdjust > 0 ? '+' : ''}${state.kcalAdjust} check-in adjustment` : ''}</td></tr>
+      <tr class="protein"><td>Protein</td><td class="big num">${T.p}<small>g</small></td><td class="how">${s.pfac} g per lb of lean mass (${T.lean_lb.toFixed(1)} lb)</td></tr>
+      <tr class="carbs"><td>Carbs</td><td class="big num">${T.c}<small>g</small></td><td class="how">what's left after protein and fat, at 4 kcal per g</td></tr>
+      <tr class="fat"><td>Fat</td><td class="big num">${T.f}<small>g</small></td><td class="how">${s.ffac} g per lb of bodyweight</td></tr>`;
+    document.getElementById('split').innerHTML = `<i style="background:var(--protein);width:100%"></i><i style="background:var(--carbs)"></i><i style="background:var(--fat)"></i>`;
+    document.getElementById('split').style.gridTemplateColumns = `${pk / tot}fr ${ck / tot}fr ${fk / tot}fr`;
+    document.getElementById('splitLegend').innerHTML = `<span><b>${r(pk / tot * 100)}%</b> protein</span><span><b>${r(ck / tot * 100)}%</b> carbs</span><span><b>${r(fk / tot * 100)}%</b> fat</span>`;
+    document.getElementById('explain').innerHTML = `Lean mass is <b>${T.lean_lb.toFixed(1)} lb</b> (${s.weight_lb} lb at ${s.body_fat_pct}% body fat). BMR ${T.bmrIsAuto ? 'estimated at' : 'entered as'} <b>${fmt(T.bmr)}</b> kcal, times ${T.mult} for activity gives a maintenance of about <b>${fmt(T.tdee)}</b> kcal. ${T.surplus > 0 ? `A ${fmt(T.surplus)} kcal surplus` : T.surplus < 0 ? `A ${fmt(-T.surplus)} kcal deficit` : 'No surplus'} lands the daily target at <b>${fmt(T.kcal)}</b> kcal. Expect about ${GAIN_RANGE[s.experience].join(' to ')} lb per week on the scale as an ${s.experience} lifter.`;
+  }
+
+  /* ================= render: progress ================= */
+  function isoWeekKey(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    const day = (d.getDay() + 6) % 7; // Monday = 0
+    d.setDate(d.getDate() - day);
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  }
+  function weeklyAverages() {
+    const g = {};
+    state.weights.forEach((w) => { const k = isoWeekKey(w.date); (g[k] = g[k] || []).push(+w.lb); });
+    return Object.keys(g).sort().map((k) => ({ week: k, avg: g[k].reduce((a, b) => a + b, 0) / g[k].length, n: g[k].length }));
+  }
+  function recommendation(weeks) {
+    const range = GAIN_RANGE[state.stats.experience] || GAIN_RANGE.intermediate;
+    if (weeks.length < 3) return { kind: 'hold', title: 'Hold, not enough data', body: `You have ${weeks.length} week${weeks.length === 1 ? '' : 's'} of weigh-ins. Three weekly averages are needed before the trend means anything.`, rate: null, range };
+    const use = weeks.slice(-5);
+    const n = use.length, xs = use.map((_, i) => i), ys = use.map((w) => w.avg);
+    const mx = xs.reduce((a, b) => a + b) / n, my = ys.reduce((a, b) => a + b) / n;
+    let num = 0, den = 0; xs.forEach((x, i) => { num += (x - mx) * (ys[i] - my); den += (x - mx) ** 2; });
+    const rate = den ? num / den : 0;
+    if (rate < range[0]) return { kind: 'up', title: '+200 kcal, add as carbs', body: `Gaining ${rate.toFixed(2)} lb per week over the last ${n} weeks, under the ${range[0]} to ${range[1]} target. About 150 g cooked rice or one large sweet potato covers it.`, rate, range };
+    if (rate > range[1]) return { kind: 'down', title: '-200 kcal, pull from carbs', body: `Gaining ${rate.toFixed(2)} lb per week over the last ${n} weeks, above the ${range[0]} to ${range[1]} target. Trim a scoop of rice or the honey.`, rate, range };
+    return { kind: 'hold', title: 'Hold', body: `Gaining ${rate.toFixed(2)} lb per week over the last ${n} weeks, inside the ${range[0]} to ${range[1]} target. Keep eating the plate.`, rate, range };
+  }
+  function renderProgress() {
+    const wl = document.getElementById('weightList');
+    const ws = state.weights.slice().sort((a, b) => b.date.localeCompare(a.date));
+    wl.innerHTML = ws.length ? `<tr><th>Date</th><th class="r">lb</th><th></th></tr>` + ws.slice(0, 40).map((w, i) => `<tr><td>${w.date}</td><td class="r num">${(+w.lb).toFixed(1)}</td><td class="r"><button class="ib" data-delw="${w.date}" aria-label="delete weigh-in">${ICON.x}</button></td></tr>`).join('') : '<tr><td class="muted small">No weigh-ins yet. Add today\'s.</td></tr>';
+    const weeks = weeklyAverages();
+    const rec = recommendation(weeks);
+    const canApply = rec.kind !== 'hold';
+    document.getElementById('recBox').innerHTML = `<div class="rec ${rec.kind}"><h3>${rec.title}</h3><p>${rec.body}</p>${canApply ? `<p><button class="btn" id="applyRec">Apply ${rec.kind === 'up' ? '+200' : '-200'} to my target</button> <span class="small muted">then press Balance now on the plate</span></p>` : ''}</div>`;
+    const wk = document.getElementById('weekList');
+    wk.innerHTML = weeks.length ? `<tr><th>Week of</th><th class="r">Avg lb</th><th class="r">Change</th><th class="r">Weigh-ins</th></tr>` + weeks.slice().reverse().map((w, i, arr) => {
+      const prev = arr[i + 1];
+      const ch = prev ? w.avg - prev.avg : null;
+      let pill = '<span class="pill neutral">first week</span>';
+      if (ch !== null) { const tone = ch < rec.range[0] ? 'warn' : ch > rec.range[1] ? 'bad' : 'ok'; pill = `<span class="pill ${tone}">${ch >= 0 ? '+' : ''}${ch.toFixed(2)}</span>`; }
+      return `<tr><td>${w.week}</td><td class="r num">${w.avg.toFixed(1)}</td><td class="r">${pill}</td><td class="r num">${w.n}</td></tr>`;
+    }).join('') : '';
+    const ll = document.getElementById('logList');
+    const logs = state.logs.slice().sort((a, b) => b.date.localeCompare(a.date));
+    ll.innerHTML = logs.length ? `<tr><th>Date</th><th class="r">kcal</th><th class="r">P</th><th class="r">C</th><th class="r">F</th><th class="r">vs target</th><th></th></tr>` + logs.slice(0, 60).map((l) => {
+      const d = l.kcal - l.tkcal, tone = Math.abs(d) <= l.tkcal * 0.04 ? 'ok' : Math.abs(d) <= l.tkcal * 0.1 ? 'warn' : 'bad';
+      return `<tr><td>${l.date}</td><td class="r num">${fmt(l.kcal)}</td><td class="r num">${l.p}</td><td class="r num">${l.c}</td><td class="r num">${l.f}</td><td class="r"><span class="pill ${tone}">${d >= 0 ? '+' : ''}${fmt(d)}</span></td><td class="r"><button class="ib" data-dell="${l.date}" aria-label="delete log">${ICON.x}</button></td></tr>`;
+    }).join('') : '<tr><td class="muted small">Nothing logged yet.</td></tr>';
+  }
+
+  function renderAll() {
+    document.getElementById('autoBalance').checked = !!state.autoBalance;
+    renderGauges(); renderMeals(); renderPantry(); renderNumbers(); renderProgress();
+  }
+
+  /* ================= plan actions ================= */
+  const findMeal = (id) => state.meals.find((m) => m.id === id);
+  function findItem(itemId) {
+    for (const m of state.meals) { const i = m.items.findIndex((it) => it.id === itemId); if (i >= 0) return { meal: m, index: i, item: m.items[i] }; }
+    return null;
+  }
+  function addFood(key, mealId, index) {
+    const m = findMeal(mealId) || state.meals[0]; const f = food(key); if (!m || !f) return;
+    const it = { id: nid(), key, grams: f.portion.g, base: f.portion.g, locked: false };
+    if (index === undefined || index < 0 || index > m.items.length) m.items.push(it); else m.items.splice(index, 0, it);
+    afterChange();
+  }
+  function moveItem(itemId, mealId, index) {
+    const src = findItem(itemId); const dst = findMeal(mealId); if (!src || !dst) return;
+    src.meal.items.splice(src.index, 1);
+    if (src.meal === dst && index !== undefined && index > src.index) index -= 1;
+    if (index === undefined || index < 0 || index > dst.items.length) dst.items.push(src.item); else dst.items.splice(index, 0, src.item);
+    lastChanges = {}; persist(); renderAll();
+  }
+  function removeItem(itemId) { const src = findItem(itemId); if (!src) return; src.meal.items.splice(src.index, 1); afterChange(); }
+  function swapItem(itemId, newKey) {
+    const src = findItem(itemId); if (!src) return;
+    const a = food(src.item.key), b = food(newKey);
+    const g = Math.max(5, r(src.item.grams * a.kcal / b.kcal / 5) * 5); // same calories on the way in, balancer tidies the rest
+    src.item.key = newKey; src.item.grams = g; src.item.base = g; src.item.locked = false;
+    afterChange();
+  }
+
+  /* ================= drag and drop ================= */
+  let drag = null;
+  function clearDropMarks() { document.querySelectorAll('.drop-before,.drop-after').forEach((el) => el.classList.remove('drop-before', 'drop-after')); document.querySelectorAll('.meal.over,.trash.over').forEach((el) => el.classList.remove('over')); }
+  function dropTarget(ev, mealEl) {
+    const rows = [...mealEl.querySelectorAll('.row')];
+    for (let i = 0; i < rows.length; i++) {
+      const rect = rows[i].getBoundingClientRect();
+      if (ev.clientY < rect.top + rect.height / 2) return { index: i, row: rows[i], before: true };
+      if (ev.clientY < rect.bottom) return { index: i + 1, row: rows[i], before: false };
+    }
+    return { index: rows.length, row: rows[rows.length - 1], before: false };
+  }
+  document.addEventListener('dragstart', (ev) => {
+    const chip = ev.target.closest && ev.target.closest('.chip');
+    const row = ev.target.closest && ev.target.closest('.row');
+    if (chip) { drag = { type: 'food', key: chip.dataset.food }; chip.classList.add('dragging'); document.body.classList.add('drag-food'); }
+    else if (row) { drag = { type: 'item', id: row.dataset.item }; row.classList.add('dragging'); document.body.classList.add('drag-item', 'drag-food'); }
+    else return;
+    try { ev.dataTransfer.setData('text/plain', JSON.stringify(drag)); ev.dataTransfer.effectAllowed = 'move'; } catch (e) {}
+  });
+  document.addEventListener('dragend', () => { drag = null; clearDropMarks(); document.querySelectorAll('.dragging').forEach((el) => el.classList.remove('dragging')); document.body.classList.remove('drag-food', 'drag-item'); });
+  document.addEventListener('dragover', (ev) => {
+    if (!drag) return;
+    const mealEl = ev.target.closest && ev.target.closest('.meal');
+    const trash = ev.target.closest && ev.target.closest('#trash');
+    if (mealEl) {
+      ev.preventDefault(); ev.dataTransfer.dropEffect = 'move';
+      clearDropMarks(); mealEl.classList.add('over');
+      const t = dropTarget(ev, mealEl);
+      if (t.row) t.row.classList.add(t.before ? 'drop-before' : 'drop-after');
+    } else if (trash && drag.type === 'item') { ev.preventDefault(); clearDropMarks(); trash.classList.add('over'); }
+    else clearDropMarks();
+  });
+  document.addEventListener('drop', (ev) => {
+    if (!drag) return;
+    const mealEl = ev.target.closest && ev.target.closest('.meal');
+    const trash = ev.target.closest && ev.target.closest('#trash');
+    if (mealEl) {
+      ev.preventDefault();
+      const t = dropTarget(ev, mealEl);
+      if (drag.type === 'food') addFood(drag.key, mealEl.dataset.meal, t.index);
+      else moveItem(drag.id, mealEl.dataset.meal, t.index);
+    } else if (trash && drag.type === 'item') { ev.preventDefault(); removeItem(drag.id); }
+    drag = null; clearDropMarks(); document.body.classList.remove('drag-food', 'drag-item');
+  });
+
+  /* ================= row menu ================= */
+  function closeMenu() { document.querySelectorAll('.menu').forEach((m) => m.remove()); }
+  function openMenu(rowEl, itemId) {
+    closeMenu();
+    const src = findItem(itemId); if (!src) return;
+    const f = food(src.item.key);
+    let html = '';
+    if (f.group) {
+      const alts = Object.entries(allFoods()).filter(([k, x]) => x.group === f.group && k !== src.item.key);
+      if (alts.length) html += `<div class="mh label">Swap (${GROUPS[f.group] || f.group})</div>` + alts.map(([k, x]) => `<button data-swap="${k}">${esc(x.name)} <small>${x.p}P ${x.c}C ${x.f}F</small></button>`).join('') + '<hr>';
+    }
+    html += `<div class="mh label">Move to</div>` + state.meals.filter((m) => m !== src.meal).map((m) => `<button data-move="${m.id}">${esc(m.name)}</button>`).join('');
+    const menu = document.createElement('div'); menu.className = 'menu'; menu.innerHTML = html;
+    rowEl.querySelector('.acts').appendChild(menu);
+    menu.addEventListener('click', (ev) => {
+      const b = ev.target.closest('button'); if (!b) return;
+      if (b.dataset.swap) swapItem(itemId, b.dataset.swap);
+      else if (b.dataset.move) moveItem(itemId, b.dataset.move);
+      closeMenu();
+    });
+  }
+  document.addEventListener('click', (ev) => { if (!ev.target.closest('.menu') && !ev.target.closest('[data-act="menu"]')) closeMenu(); });
+  document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') closeMenu(); });
+
+  /* ================= events ================= */
+  document.getElementById('meals').addEventListener('click', (ev) => {
+    const pick = ev.target.closest('[data-pick]');
+    if (pick) { state.activeMeal = pick.dataset.pick; persist(); renderMeals(); return; }
+    const ap = ev.target.closest('[data-apply]');
+    if (ap) { applySuggestion(+ap.dataset.apply); return; }
+    const b = ev.target.closest('[data-act]'); if (!b) return;
+    const row = b.closest('.row'); const id = row.dataset.item;
+    if (b.dataset.act === 'remove') removeItem(id);
+    else if (b.dataset.act === 'lock') { const src = findItem(id); src.item.locked = !src.item.locked; if (src.item.locked) src.item.base = src.item.grams; lastChanges = {}; persist(); renderAll(); }
+    else if (b.dataset.act === 'menu') openMenu(row, id);
+  });
+  document.getElementById('meals').addEventListener('change', (ev) => {
+    const inp = ev.target.closest('[data-grams]'); if (!inp) return;
+    const src = findItem(inp.dataset.grams); if (!src) return;
+    const g = Math.max(0, r(+inp.value || 0));
+    src.item.grams = g; src.item.base = g || src.item.base; src.item.locked = true; // a hand-typed amount stays put
+    lastChanges = {}; persist(); renderAll();
+  });
+  document.getElementById('pantry').addEventListener('click', (ev) => {
+    const add = ev.target.closest('[data-add]');
+    if (add) { addFood(add.dataset.add, state.activeMeal); return; }
+    if (ev.target.id === 'cf_save') {
+      const v = (id) => document.getElementById(id).value.trim();
+      const name = v('cf_name'); if (!name) { const el = document.getElementById('cf_name'); el.placeholder = 'Give the food a name first'; el.focus(); return; }
+      const key = 'custom_' + name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+      const pg = +v('cf_pg') || 100;
+      state.customFoods[key] = { name, state: v('cf_state'), kcal: +v('cf_kcal') || 0, p: +v('cf_p') || 0, c: +v('cf_c') || 0, f: +v('cf_f') || 0, role: v('cf_role'), custom: true, portion: { g: pg, name: v('cf_pn') || 'portion', plural: (v('cf_pn') || 'portion') + 's' }, snap: 5, flex: [0.4, 2.5] };
+      persist(); renderPantry();
+    }
+  });
+  document.getElementById('search').addEventListener('input', renderPantry);
+  document.getElementById('autoBalance').addEventListener('change', (ev) => { state.autoBalance = ev.target.checked; persist(); if (state.autoBalance) afterChange(); });
+  document.getElementById('balanceNow').addEventListener('click', () => { trackedBalance(); persist(); renderAll(); });
+  document.getElementById('unlockAll').addEventListener('click', () => { state.meals.forEach((m) => m.items.forEach((it) => { it.locked = false; })); lastChanges = {}; persist(); renderAll(); });
+  // two-step reset: first click arms the button, second click within 4 s resets (sandboxed pages block confirm())
+  let resetArmed = null;
+  document.getElementById('resetPlan').addEventListener('click', (ev) => {
+    const b = ev.currentTarget;
+    if (resetArmed) {
+      clearTimeout(resetArmed); resetArmed = null;
+      state.meals = defaultMeals(); state.activeMeal = 'breakfast'; trackedBalance(); persist(); renderAll();
+      b.textContent = 'Reset to balanced plan'; b.classList.remove('primary');
+      return;
+    }
+    b.textContent = 'Click again to rebuild the plate'; b.classList.add('primary');
+    resetArmed = setTimeout(() => { resetArmed = null; b.textContent = 'Reset to balanced plan'; b.classList.remove('primary'); }, 4000);
+  });
+  document.getElementById('printPlan').addEventListener('click', () => window.print());
+  document.getElementById('logToday').addEventListener('click', () => {
+    const D = dayTotals(), T = targets(), date = today();
+    state.logs = state.logs.filter((l) => l.date !== date);
+    state.logs.push({ date, kcal: D.kcal, p: D.p, c: D.c, f: D.f, tkcal: T.kcal, tp: T.p, tc: T.c, tf: T.f });
+    persist(); renderProgress();
+    const b = document.getElementById('logToday'); b.textContent = 'Logged ' + date; setTimeout(() => { b.textContent = "Log today's plate"; }, 1800);
+  });
+
+  // stats form
+  document.getElementById('statsForm').addEventListener('change', () => {
+    const v = (id) => document.getElementById(id).value;
+    const s = state.stats;
+    s.weight_lb = +v('s_weight') || s.weight_lb; s.body_fat_pct = +v('s_bf') || 0;
+    s.bmr_kcal = v('s_bmr') === '' ? 0 : (+v('s_bmr') || 0);
+    s.activity = v('s_activity'); s.goal = v('s_goal'); s.experience = v('s_exp');
+    s.pfac = +v('s_pfac') || 1.1; s.ffac = +v('s_ffac') || 0.42;
+    persist(); renderAll();
+  });
+  document.getElementById('adjMinus').addEventListener('click', () => { state.kcalAdjust = (+state.kcalAdjust || 0) - 200; persist(); renderAll(); });
+  document.getElementById('adjPlus').addEventListener('click', () => { state.kcalAdjust = (+state.kcalAdjust || 0) + 200; persist(); renderAll(); });
+
+  // progress
+  document.getElementById('w_date').value = today();
+  document.getElementById('addWeight').addEventListener('click', () => {
+    const date = document.getElementById('w_date').value, lb = +document.getElementById('w_lb').value;
+    if (!date || !lb) return;
+    state.weights = state.weights.filter((w) => w.date !== date); state.weights.push({ date, lb });
+    document.getElementById('w_lb').value = '';
+    persist(); renderProgress();
+  });
+  document.getElementById('w_lb').addEventListener('keydown', (ev) => { if (ev.key === 'Enter') document.getElementById('addWeight').click(); });
+  document.getElementById('tab-progress').addEventListener('click', (ev) => {
+    const dw = ev.target.closest('[data-delw]'); const dl = ev.target.closest('[data-dell]'); const ap = ev.target.closest('#applyRec');
+    if (dw) { state.weights = state.weights.filter((w) => w.date !== dw.dataset.delw); persist(); renderProgress(); }
+    else if (dl) { state.logs = state.logs.filter((l) => l.date !== dl.dataset.dell); persist(); renderProgress(); }
+    else if (ap) { const rec = recommendation(weeklyAverages()); state.kcalAdjust = (+state.kcalAdjust || 0) + (rec.kind === 'up' ? 200 : -200); persist(); renderAll(); showTab('numbers'); }
+  });
+
+  // tabs
+  function showTab(name) {
+    document.querySelectorAll('.tabs [role=tab]').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
+    ['plan', 'numbers', 'progress'].forEach((t) => { document.getElementById('tab-' + t).hidden = t !== name; });
+    try { localStorage.setItem('bulkplate.tab', name); } catch (e) {}
+  }
+  document.querySelector('.tabs').addEventListener('click', (ev) => { const b = ev.target.closest('[data-tab]'); if (b) showTab(b.dataset.tab); });
+
+  /* ================= boot ================= */
+  const local = loadLocal();
+  if (local) state = adopt(local);
+  renderAll();
+  let lastTab = 'plan'; try { lastTab = localStorage.getItem('bulkplate.tab') || 'plan'; } catch (e) {}
+  showTab(lastTab);
+  connectDb();
+})();
+</script>
