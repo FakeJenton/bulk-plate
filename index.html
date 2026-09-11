@@ -872,8 +872,8 @@
     if (n < 0.2 || n > 24) return '';
     const near = Math.round(n);
     const shown = Math.abs(n - near) < 0.08 ? String(near) : n.toFixed(1);
-    const word = (shown === '1') ? f.portion.name : f.portion.plural;
-    return `${shown} ${word}`;
+    if (shown === '1') return /^\d/.test(f.portion.name) ? f.portion.name : `1 ${f.portion.name}`;
+    return `${shown} ${f.portion.plural}`;
   }
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
@@ -956,7 +956,7 @@
         return `<div class="chip ${on ? 'stocked' : ''} ${fav ? 'favorite' : ''}" draggable="true" data-food="${key}" title="Per 100 g: ${f.kcal} kcal, ${f.p} P, ${f.c} C, ${f.f} F">
           <button class="stk" data-stock="${key}" aria-pressed="${on}" title="${on ? 'Stocked: click to remove from your list' : 'Mark as stocked (you have it at home)'}" aria-label="stocked">&#x2713;</button>
           <button class="fav" data-fav="${key}" aria-pressed="${fav}" title="${fav ? 'Favorite: click to unstar' : 'Star as a favorite'}" aria-label="favorite">${ICON.star}</button>
-          <div><div class="cn">${esc(f.name)}<span class="state">${esc(f.state)}</span>${f.brand ? `<span class="brand">${esc(f.brand)}</span>` : ''}</div><div class="cm"><span>1 ${esc(f.portion.name)} = ${f.portion.g} g</span><span>${m.kcal} kcal</span><span style="color:var(--protein)">${m.p}P</span><span style="color:var(--carbs)">${m.c}C</span><span style="color:var(--fat)">${m.f}F</span></div></div>
+          <div><div class="cn">${esc(f.name)}<span class="state">${esc(f.state)}</span>${f.brand ? `<span class="brand">${esc(f.brand)}</span>` : ''}</div><div class="cm"><span>${/^\d/.test(f.portion.name) ? '' : '1 '}${esc(f.portion.name)} = ${f.portion.g} g</span><span>${m.kcal} kcal</span><span style="color:var(--protein)">${m.p}P</span><span style="color:var(--carbs)">${m.c}C</span><span style="color:var(--fat)">${m.f}F</span></div></div>
           <button class="add" data-add="${key}" aria-label="Add ${esc(f.name)} to the target meal">+</button></div>`;
       }).join('')}</div></div>`).join('');
     const emptyMsg = pantryMode === 'stocked' && !stocked.size
