@@ -537,7 +537,7 @@
     beef_90_10:      { name: '90/10 ground beef', state: 'raw', kcal: 176, p: 20, c: 0, f: 10, role: 'protein', group: 'meat', portion: { g: 113, name: '4 oz portion', plural: 'x 4 oz' }, snap: 5, flex: [0.4, 2.5] },
     salmon:          { name: 'Salmon', state: 'raw', kcal: 208, p: 20, c: 0, f: 13, role: 'protein', group: 'meat', portion: { g: 113, name: '4 oz portion', plural: 'x 4 oz' }, snap: 5, flex: [0.4, 2.5] },
     tilapia:         { name: 'Tilapia / white fish', state: 'raw', kcal: 96, p: 20, c: 0, f: 1.7, role: 'protein', group: 'meat', portion: { g: 113, name: '4 oz portion', plural: 'x 4 oz' }, snap: 5, flex: [0.4, 2.5] },
-    whey:            { name: 'Whey protein', state: 'as sold', kcal: 400, p: 80, c: 8, f: 6, role: 'protein', portion: { g: 30, name: 'scoop', plural: 'scoops' }, snap: 15, flex: [0.5, 2] },
+    whey:            { name: 'Whey protein', state: 'as sold', kcal: 400, p: 80, c: 8, f: 6, role: 'protein', group: 'shake', portion: { g: 30, name: 'scoop', plural: 'scoops' }, snap: 15, flex: [0.5, 2] },
     white_rice:      { name: 'White rice', state: 'cooked', kcal: 130, p: 2.7, c: 28, f: 0.3, role: 'carb', group: 'starch', portion: { g: 175, name: 'cup cooked', plural: 'cups cooked' }, snap: 5, flex: [0.3, 2.5] },
     sweet_potato:    { name: 'Sweet potato', state: 'baked', kcal: 90, p: 2, c: 21, f: 0.1, role: 'carb', group: 'starch', portion: { g: 150, name: 'medium', plural: 'medium' }, snap: 5, flex: [0.3, 2.5] },
     pasta:           { name: 'Pasta', state: 'cooked', kcal: 158, p: 5.8, c: 31, f: 0.9, role: 'carb', group: 'starch', portion: { g: 140, name: 'cup cooked', plural: 'cups cooked' }, snap: 5, flex: [0.3, 2.5] },
@@ -561,20 +561,21 @@
     aldi_cottage_4:     { name: 'Friendly Farms small curd cottage cheese (4%)', brand: 'Aldi', state: 'as sold', kcal: 106, p: 11.5, c: 4.4, f: 4.4, role: 'dairy', group: 'dairy', portion: { g: 113, name: '1/2 cup', plural: 'x 1/2 cup' }, snap: 5, flex: [0.5, 2.5] },
     aldi_granola_oh:    { name: 'Simply Nature oats & honey granola', brand: 'Aldi', state: 'as sold', kcal: 400, p: 7.3, c: 65.5, f: 14.5, role: 'carb', portion: { g: 55, name: '1/2 cup', plural: 'x 1/2 cup' }, snap: 5, flex: [0.4, 2.5] },
     aldi_simms_sausage: { name: 'Simms zero sugar smoked sausage', brand: 'Aldi', state: 'as sold', kcal: 429, p: 32, c: 0, f: 32, role: 'protein', group: 'meat', portion: { g: 28, name: 'stick (1 oz)', plural: 'sticks' }, snap: 28, flex: [0.5, 3] },
-    on_whey_choc:       { name: 'ON Gold Standard whey, extreme milk chocolate', brand: 'ON', state: 'as sold', kcal: 375, p: 75, c: 9.4, f: 4.7, role: 'protein', portion: { g: 32, name: 'scoop', plural: 'scoops' }, snap: 16, flex: [0.5, 2] },
+    on_whey_choc:       { name: 'ON Gold Standard whey, extreme milk chocolate', brand: 'ON', state: 'as sold', kcal: 375, p: 75, c: 9.4, f: 4.7, role: 'protein', group: 'shake', portion: { g: 32, name: 'scoop', plural: 'scoops' }, snap: 16, flex: [0.5, 2] },
     raw_cream_of_rice:  { name: 'RAW cream of rice, double fudge brownie', brand: 'RAW', state: 'dry', kcal: 338, p: 8.5, c: 73.2, f: 1.4, role: 'carb', group: 'starch', portion: { g: 35.5, name: 'scoop', plural: 'scoops' }, snap: 18, flex: [0.5, 3] },
   };
   const ROLE_ORDER = [
     ['protein', 'Protein'], ['carb', 'Carbs and starch'], ['dairy', 'Dairy'], ['fruit', 'Fruit'],
     ['veg', 'Vegetables'], ['fat', 'Fats'], ['extra', 'Sauces and sweeteners'], ['custom', 'Your foods'],
   ];
-  const GROUPS = { starch: 'Starch', meat: 'Protein', dairy: 'Dairy', bread: 'Bread' };
+  const GROUPS = { starch: 'Starch', meat: 'Protein', dairy: 'Dairy', bread: 'Bread', shake: 'Protein powder' };
 
   const DEFAULT_MEALS = [
     ['Breakfast',   [['eggs', 150], ['ww_bread', 85], ['butter', 7], ['banana', 120]]],
     ['Mid-morning', [['greek_yogurt_nf', 227], ['granola', 100], ['honey', 21]]],
     ['Lunch',       [['chicken_breast', 142], ['white_rice', 350], ['green_veg', 150], ['teriyaki', 30]]],
     ['Pre-workout', [['cottage_2pct', 226], ['sweet_potato', 250]]],
+    ['Post-workout', [['banana', 118, true], ['on_whey_choc', 32, true]]], // the shake: 1 banana + 1 scoop, locked
     ['Dinner',      [['beef_90_10', 170], ['white_rice', 350], ['green_veg', 150]]],
     ['Before bed',  [['cottage_2pct', 226], ['peanut_butter', 32]]],
   ];
@@ -590,7 +591,7 @@
   function defaultMeals() {
     return DEFAULT_MEALS.map(([name, items]) => ({
       id: name.toLowerCase().replace(/[^a-z]/g, ''), name,
-      items: items.map(([key, grams]) => ({ id: nid(), key, grams, base: grams, locked: false })),
+      items: items.map(([key, grams, locked]) => ({ id: nid(), key, grams, base: grams, locked: !!locked })),
     }));
   }
   function defaultState() {
@@ -613,7 +614,14 @@
     if (d && typeof d === 'object') {
       Object.assign(s.stats, d.stats || {});
       for (const k of ['kcalAdjust', 'autoBalance', 'activeMeal', 'updatedAt']) if (d[k] !== undefined) s[k] = d[k];
-      if (Array.isArray(d.meals)) s.meals = d.meals;
+      if (Array.isArray(d.meals)) {
+        s.meals = d.meals;
+        if (!s.meals.some((m) => m.id === 'postworkout')) {
+          const shake = defaultMeals().find((m) => m.id === 'postworkout');
+          const at = s.meals.findIndex((m) => m.id === 'preworkout');
+          s.meals.splice(at >= 0 ? at + 1 : s.meals.length, 0, shake);
+        }
+      }
       if (Array.isArray(d.weights)) s.weights = d.weights;
       if (Array.isArray(d.logs)) s.logs = d.logs;
       if (d.customFoods) s.customFoods = d.customFoods;
@@ -1099,6 +1107,7 @@
     ['midmorning', ['dairy|protein', 'carb', 'fruit|extra']],
     ['lunch',      ['protein:meat|protein', 'carb:starch|carb', 'veg', 'extra']],
     ['preworkout', ['dairy|protein', 'carb:starch|carb|fruit']],
+    ['postworkout', ['protein:shake', 'fruit']],
     ['dinner',     ['protein:meat|protein', 'carb:starch|carb', 'veg']],
     ['beforebed',  ['dairy|protein', 'fat']],
   ];
@@ -1124,9 +1133,10 @@
         const k = pick(spec); if (!k || items.some((it) => it.key === k)) return;
         used[k] = (used[k] || 0) + 1;
         // starting size by role, so the balancer has room to move in both directions
-        const mult = { protein: 1.5, carb: 2, fat: 1.5, veg: 1.5, dairy: 1, fruit: 1, extra: 1 }[foods[k].role] || 1;
-        const g = Math.round(foods[k].portion.g * mult / (foods[k].snap || 5)) * (foods[k].snap || 5);
-        items.push({ id: nid(), key: k, grams: g, base: g, locked: false });
+        const shake = id === 'postworkout';
+        const mult = shake ? 1 : ({ protein: 1.5, carb: 2, fat: 1.5, veg: 1.5, dairy: 1, fruit: 1, extra: 1 }[foods[k].role] || 1);
+        const g = shake ? foods[k].portion.g : Math.round(foods[k].portion.g * mult / (foods[k].snap || 5)) * (foods[k].snap || 5);
+        items.push({ id: nid(), key: k, grams: g, base: g, locked: shake });
       });
       return { id, name: names[id], items };
     });
