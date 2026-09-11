@@ -556,6 +556,12 @@
     olive_oil:       { name: 'Olive oil', state: 'as sold', kcal: 884, p: 0, c: 0, f: 100, role: 'fat', portion: { g: 14, name: 'tbsp', plural: 'tbsp' }, snap: 1, flex: [0.5, 1.5] },
     avocado:         { name: 'Avocado', state: 'raw', kcal: 160, p: 2, c: 9, f: 15, role: 'fat', portion: { g: 100, name: 'half', plural: 'halves' }, snap: 5, flex: [0.5, 2] },
     almonds:         { name: 'Almonds', state: 'as sold', kcal: 579, p: 21, c: 22, f: 50, role: 'fat', portion: { g: 28, name: 'oz handful', plural: 'oz' }, snap: 1, flex: [0.5, 2] },
+    // Jacob's store picks. Label values converted to per 100 g; the label serving is the portion.
+    aldi_greek_vanilla: { name: 'Simply Nature vanilla bean Greek yogurt (whole milk)', brand: 'Aldi', state: 'as sold', kcal: 106, p: 8.8, c: 11.8, f: 2.6, role: 'dairy', group: 'dairy', portion: { g: 170, name: '3/4 cup', plural: 'x 3/4 cup' }, snap: 5, flex: [0.5, 2] },
+    aldi_cottage_4:     { name: 'Friendly Farms small curd cottage cheese (4%)', brand: 'Aldi', state: 'as sold', kcal: 106, p: 11.5, c: 4.4, f: 4.4, role: 'dairy', group: 'dairy', portion: { g: 113, name: '1/2 cup', plural: 'x 1/2 cup' }, snap: 5, flex: [0.5, 2.5] },
+    aldi_granola_oh:    { name: 'Simply Nature oats & honey granola', brand: 'Aldi', state: 'as sold', kcal: 400, p: 7.3, c: 65.5, f: 14.5, role: 'carb', portion: { g: 55, name: '1/2 cup', plural: 'x 1/2 cup' }, snap: 5, flex: [0.4, 2.5] },
+    aldi_simms_sausage: { name: 'Simms zero sugar smoked sausage', brand: 'Aldi', state: 'as sold', kcal: 429, p: 32, c: 0, f: 32, role: 'protein', group: 'meat', portion: { g: 28, name: 'stick (1 oz)', plural: 'sticks' }, snap: 28, flex: [0.5, 3] },
+    on_whey_choc:       { name: 'ON Gold Standard whey, extreme milk chocolate', brand: 'ON', state: 'as sold', kcal: 375, p: 75, c: 9.4, f: 4.7, role: 'protein', portion: { g: 32, name: 'scoop', plural: 'scoops' }, snap: 16, flex: [0.5, 2] },
   };
   const ROLE_ORDER = [
     ['protein', 'Protein'], ['carb', 'Carbs and starch'], ['dairy', 'Dairy'], ['fruit', 'Fruit'],
@@ -940,7 +946,7 @@
     Object.entries(foods).forEach(([key, f]) => {
       if (pantryMode === 'stocked' && !stocked.has(key)) return;
       if (pantryMode === 'favorites' && !favs.has(key)) return;
-      if (q && !(f.name.toLowerCase().includes(q) || f.state.toLowerCase().includes(q))) return;
+      if (q && !(f.name.toLowerCase().includes(q) || f.state.toLowerCase().includes(q) || (f.brand || '').toLowerCase().includes(q))) return;
       (byRole[f.role] = byRole[f.role] || []).push([key, f]);
     });
     const html = ROLE_ORDER.filter(([role]) => byRole[role]).map(([role, title]) => `<div class="pgroup"><span class="label">${title}</span><div class="chips">${
