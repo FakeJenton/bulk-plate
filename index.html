@@ -260,7 +260,18 @@
   .pgroup { margin-top: 10px; }
   .pgroup .label { margin-bottom: 6px; display: block; }
   .chips { display: flex; flex-direction: column; gap: 4px; }
-  .chip { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); cursor: grab; }
+  .chip { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); cursor: grab; }
+  .chip.stocked { border-color: var(--accent); background: color-mix(in srgb, var(--accent-soft) 45%, var(--surface)); }
+  .chip .stk { width: 20px; height: 20px; border-radius: 5px; border: 1.5px solid var(--line-strong); background: var(--surface); color: transparent; display: grid; place-items: center; padding: 0; font-size: 12px; font-weight: 700; }
+  .chip .stk:hover { border-color: var(--accent); }
+  .chip.stocked .stk { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .pfilter { display: flex; gap: 2px; background: var(--surface-2); padding: 3px; border-radius: 999px; margin-top: 8px; }
+  .pfilter button { flex: 1; border: 0; background: transparent; padding: 5px 8px; border-radius: 999px; color: var(--ink-2); font-size: 12.5px; font-weight: 500; }
+  .pfilter button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+  .stock-actions { display: flex; gap: 6px; margin-top: 8px; }
+  .stock-actions .btn { flex: 1; font-size: 12.5px; padding: 6px 8px; }
+  .stock-actions .btn:disabled { opacity: 0.5; cursor: default; }
+  .stock-empty { font-size: 12px; color: var(--ink-2); padding: 10px 2px 4px; line-height: 1.5; }
   .chip:hover { border-color: var(--accent); }
   .chip.dragging { opacity: 0.4; }
   .chip .cn { font-weight: 500; font-size: 13px; }
@@ -398,6 +409,8 @@
           <h2>Pantry</h2>
           <p>Drag a food onto a meal, or press + to add it to the meal marked <b>target</b> (click a meal name to change it).</p>
           <input class="search" id="search" type="search" placeholder="Search foods" aria-label="Search foods">
+          <div class="pfilter" role="group" aria-label="Pantry filter"><button data-pmode="stocked" aria-pressed="false">Stocked <span id="stockCount">(0)</span></button><button data-pmode="all" aria-pressed="true">All foods</button></div>
+          <div class="stock-actions"><button class="btn primary" id="buildStocked" title="Fill all six meals using only the foods you have ticked, then balance to your targets">Build a plate from what's stocked</button><button class="btn quiet" id="clearStocked" title="Untick everything">Clear</button></div>
         </div>
         <div class="trash" id="trash">Drop here to remove from the day</div>
         <div class="pantry-body" id="pantryBody"></div>
@@ -571,7 +584,7 @@
       version: 1, updatedAt: '',
       stats: { weight_lb: 212.4, body_fat_pct: 16.4, bmr_kcal: 2109, activity: 'high', goal: 'lean_bulk', experience: 'experienced', pfac: 1.1, ffac: 0.42 },
       kcalAdjust: 0, autoBalance: true, activeMeal: 'breakfast',
-      meals: defaultMeals(), weights: [], logs: [], customFoods: {},
+      meals: defaultMeals(), weights: [], logs: [], customFoods: {}, stocked: [],
     };
   }
   let state = defaultState();
@@ -590,6 +603,7 @@
       if (Array.isArray(d.weights)) s.weights = d.weights;
       if (Array.isArray(d.logs)) s.logs = d.logs;
       if (d.customFoods) s.customFoods = d.customFoods;
+      if (Array.isArray(d.stocked)) s.stocked = d.stocked;
     }
     return s;
   }
@@ -709,7 +723,7 @@
     const W = [16, 16, 81];
     const err = () => { const D = dayTotals(); return W[0] * (D.p - T.p) ** 2 + W[1] * (D.c - T.c) ** 2 + W[2] * (D.f - T.f) ** 2; };
     let cur = err();
-    for (let step = 0; step < 80 && cur > 0; step++) {
+    for (let step = 0; step < 400 && cur > 0; step++) {
       let best = null;
       for (const it of free) {
         const f = food(it.key), snap = f.snap || 5;
@@ -756,7 +770,8 @@
       if (prev) { if (it.grams > prev.grams) { prev.item = it; prev.meal = m; prev.grams = it.grams; prev.lo = -Math.round(it.grams * 0.6); } return; }
       cands.push({ key: it.key, item: it, meal: m, grams: it.grams, lo: -Math.round(it.grams * 0.6), hi: addCap(f), existing: true });
     }));
-    STAPLES.forEach((k) => { if (food(k) && !cands.some((c) => c.key === k)) cands.push({ key: k, grams: 0, lo: 0, hi: addCap(food(k)), existing: false }); });
+    const fillers = state.stocked.length ? state.stocked : STAPLES;
+    fillers.forEach((k) => { if (food(k) && !cands.some((c) => c.key === k)) cands.push({ key: k, grams: 0, lo: 0, hi: addCap(food(k)), existing: false }); });
     const A = cands.map((c) => { const f = food(c.key); return [f.p / 100, f.c / 100, f.f / 100]; });
     const W = [16, 16, 81]; // squared kcal per gram, so errors are judged in calories
     const n = cands.length, combos = [];
@@ -802,7 +817,7 @@
     lastSuggestions = list;
     const n = Object.keys(lastChanges).length;
     const adj = n ? `<span class="adj">Auto-adjust moved ${n} portion${n === 1 ? '' : 's'} to hold your targets; they are marked in amber.</span>` : '';
-    if (!list.length) return gap.every((x) => Math.abs(x) < 4) ? `<div class="gapline">Plate is within 4 g of every target.${adj}</div>` : `<div class="gapcard"><div class="gap-head"><h2>Close the gap</h2><span class="gap-sum">${gapText(gap)}. No clean fix with the pantry staples; try adding a food and pressing Balance now.</span></div></div>`;
+    if (!list.length) return gap.every((x) => Math.abs(x) < 4) ? `<div class="gapline">Plate is within 4 g of every target.${adj}</div>` : `<div class="gapcard"><div class="gap-head"><h2>Close the gap</h2><span class="gap-sum">${gapText(gap)}. No clean fix with ${state.stocked.length ? 'what you have stocked' : 'the pantry staples'}; try adding a food and pressing Balance now.</span></div></div>`;
     const target = findMeal(state.activeMeal) || state.meals[0];
     const rows = list.map((s, i) => {
       const txt = s.parts.map((p) => {
@@ -905,19 +920,30 @@
   function renderPantry() {
     const q = (document.getElementById('search').value || '').trim().toLowerCase();
     const foods = allFoods();
+    const stocked = new Set(state.stocked.filter((k) => foods[k]));
+    document.getElementById('stockCount').textContent = `(${stocked.size})`;
+    document.querySelectorAll('[data-pmode]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.pmode === pantryMode)));
+    document.getElementById('buildStocked').disabled = stocked.size < 2;
+    document.getElementById('clearStocked').hidden = stocked.size === 0;
     const byRole = {};
     Object.entries(foods).forEach(([key, f]) => {
+      if (pantryMode === 'stocked' && !stocked.has(key)) return;
       if (q && !(f.name.toLowerCase().includes(q) || f.state.toLowerCase().includes(q))) return;
       (byRole[f.role] = byRole[f.role] || []).push([key, f]);
     });
     const html = ROLE_ORDER.filter(([role]) => byRole[role]).map(([role, title]) => `<div class="pgroup"><span class="label">${title}</span><div class="chips">${
       byRole[role].map(([key, f]) => {
         const m = macrosOf(key, f.portion.g);
-        return `<div class="chip" draggable="true" data-food="${key}" title="Per 100 g: ${f.kcal} kcal, ${f.p} P, ${f.c} C, ${f.f} F">
+        const on = stocked.has(key);
+        return `<div class="chip ${on ? 'stocked' : ''}" draggable="true" data-food="${key}" title="Per 100 g: ${f.kcal} kcal, ${f.p} P, ${f.c} C, ${f.f} F">
+          <button class="stk" data-stock="${key}" aria-pressed="${on}" title="${on ? 'Stocked: click to remove from your list' : 'Mark as stocked (you have it at home)'}" aria-label="stocked">&#x2713;</button>
           <div><div class="cn">${esc(f.name)}<span class="state">${esc(f.state)}</span></div><div class="cm"><span>1 ${esc(f.portion.name)} = ${f.portion.g} g</span><span>${m.kcal} kcal</span><span style="color:var(--protein)">${m.p}P</span><span style="color:var(--carbs)">${m.c}C</span><span style="color:var(--fat)">${m.f}F</span></div></div>
           <button class="add" data-add="${key}" aria-label="Add ${esc(f.name)} to the target meal">+</button></div>`;
       }).join('')}</div></div>`).join('');
-    document.getElementById('pantryBody').innerHTML = (html || '<p class="muted small">No food matches.</p>') + `
+    const emptyMsg = pantryMode === 'stocked' && !stocked.size
+      ? '<p class="stock-empty">Nothing ticked yet. Switch to <b>All foods</b> and tick what is in your kitchen right now. Then build a plate from it, and swaps and gap suggestions will stick to that list.</p>'
+      : '<p class="muted small">No food matches.</p>';
+    document.getElementById('pantryBody').innerHTML = (html || emptyMsg) + `
       <details class="addfood"><summary>Add your own food (per 100 g)</summary>
         <div class="frm" id="cfForm">
           <input class="full" id="cf_name" placeholder="Name (e.g. Protein pancake mix)">
@@ -1032,6 +1058,56 @@
     afterChange();
   }
 
+  /* ================= stocked list ================= */
+  let pantryMode = 'all';
+  function toggleStocked(key) {
+    const i = state.stocked.indexOf(key);
+    if (i >= 0) state.stocked.splice(i, 1); else state.stocked.push(key);
+    persist(); renderPantry();
+  }
+  // Meal template: each slot lists acceptable role[:group] options in order of preference.
+  const PLATE_TEMPLATE = [
+    ['breakfast',  ['protein', 'carb:bread|carb', 'fruit', 'fat']],
+    ['midmorning', ['dairy|protein', 'carb', 'fruit|extra']],
+    ['lunch',      ['protein:meat|protein', 'carb:starch|carb', 'veg', 'extra']],
+    ['preworkout', ['dairy|protein', 'carb:starch|carb|fruit']],
+    ['dinner',     ['protein:meat|protein', 'carb:starch|carb', 'veg']],
+    ['beforebed',  ['dairy|protein', 'fat']],
+  ];
+  function buildFromStocked() {
+    const foods = allFoods();
+    const have = state.stocked.filter((k) => foods[k]);
+    if (have.length < 2) return;
+    const used = {};
+    const pick = (spec) => {
+      for (const opt of spec.split('|')) {
+        const [role, group] = opt.split(':');
+        const c = have.filter((k) => foods[k].role === role && (!group || foods[k].group === group));
+        if (!c.length) continue;
+        c.sort((a, b) => (used[a] || 0) - (used[b] || 0)); // rotate through what you have
+        return c[0];
+      }
+      return null;
+    };
+    const names = Object.fromEntries(DEFAULT_MEALS.map(([n]) => [n.toLowerCase().replace(/[^a-z]/g, ''), n]));
+    const meals = PLATE_TEMPLATE.map(([id, slots]) => {
+      const items = [];
+      slots.forEach((spec) => {
+        const k = pick(spec); if (!k || items.some((it) => it.key === k)) return;
+        used[k] = (used[k] || 0) + 1;
+        // starting size by role, so the balancer has room to move in both directions
+        const mult = { protein: 1.5, carb: 2, fat: 1.5, veg: 1.5, dairy: 1, fruit: 1, extra: 1 }[foods[k].role] || 1;
+        const g = Math.round(foods[k].portion.g * mult / (foods[k].snap || 5)) * (foods[k].snap || 5);
+        items.push({ id: nid(), key: k, grams: g, base: g, locked: false });
+      });
+      return { id, name: names[id], items };
+    });
+    state.meals = meals; state.activeMeal = 'breakfast';
+    trackedBalance(); lastChanges = {};
+    persist(); renderAll();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
   /* ================= drag and drop ================= */
   let drag = null;
   function clearDropMarks() { document.querySelectorAll('.drop-before,.drop-after').forEach((el) => el.classList.remove('drop-before', 'drop-after')); document.querySelectorAll('.meal.over,.trash.over').forEach((el) => el.classList.remove('over')); }
@@ -1086,7 +1162,8 @@
     const f = food(src.item.key);
     let html = '';
     if (f.group) {
-      const alts = Object.entries(allFoods()).filter(([k, x]) => x.group === f.group && k !== src.item.key);
+      let alts = Object.entries(allFoods()).filter(([k, x]) => x.group === f.group && k !== src.item.key);
+      if (state.stocked.length) { const st = alts.filter(([k]) => state.stocked.includes(k)); if (st.length) alts = st; }
       if (alts.length) html += `<div class="mh label">Swap (${GROUPS[f.group] || f.group})</div>` + alts.map(([k, x]) => `<button data-swap="${k}">${esc(x.name)} <small>${x.p}P ${x.c}C ${x.f}F</small></button>`).join('') + '<hr>';
     }
     html += `<div class="mh label">Move to</div>` + state.meals.filter((m) => m !== src.meal).map((m) => `<button data-move="${m.id}">${esc(m.name)}</button>`).join('');
@@ -1124,6 +1201,12 @@
   document.getElementById('pantry').addEventListener('click', (ev) => {
     const add = ev.target.closest('[data-add]');
     if (add) { addFood(add.dataset.add, state.activeMeal); return; }
+    const stk = ev.target.closest('[data-stock]');
+    if (stk) { toggleStocked(stk.dataset.stock); return; }
+    const pm = ev.target.closest('[data-pmode]');
+    if (pm) { pantryMode = pm.dataset.pmode; try { localStorage.setItem('bulkplate.pmode', pantryMode); } catch (e) {} renderPantry(); return; }
+    if (ev.target.id === 'buildStocked') { buildFromStocked(); return; }
+    if (ev.target.id === 'clearStocked') { state.stocked = []; pantryMode = 'all'; persist(); renderAll(); return; }
     if (ev.target.id === 'cf_save') {
       const v = (id) => document.getElementById(id).value.trim();
       const name = v('cf_name'); if (!name) { const el = document.getElementById('cf_name'); el.placeholder = 'Give the food a name first'; el.focus(); return; }
@@ -1200,6 +1283,7 @@
   /* ================= boot ================= */
   const local = loadLocal();
   if (local) state = adopt(local);
+  try { pantryMode = localStorage.getItem('bulkplate.pmode') || (state.stocked.length ? 'stocked' : 'all'); } catch (e) {}
   renderAll();
   let lastTab = 'plan'; try { lastTab = localStorage.getItem('bulkplate.tab') || 'plan'; } catch (e) {}
   showTab(lastTab);
