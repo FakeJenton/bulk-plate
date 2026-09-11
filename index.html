@@ -260,7 +260,14 @@
   .pgroup { margin-top: 10px; }
   .pgroup .label { margin-bottom: 6px; display: block; }
   .chips { display: flex; flex-direction: column; gap: 4px; }
-  .chip { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); cursor: grab; }
+  .chip { display: grid; grid-template-columns: auto auto 1fr auto; align-items: center; gap: 6px; padding: 6px 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); cursor: grab; }
+  .chip .fav { width: 20px; height: 20px; border: 0; background: transparent; color: var(--line-strong); display: grid; place-items: center; padding: 0; border-radius: 5px; }
+  .chip .fav:hover { color: var(--carbs); background: var(--surface-2); }
+  .chip .fav svg { width: 15px; height: 15px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linejoin: round; }
+  .chip.favorite .fav { color: var(--carbs); }
+  .chip.favorite .fav svg { fill: currentColor; }
+  .brand { display: inline-block; font-size: 10px; letter-spacing: 0.04em; padding: 1px 5px; border-radius: 3px; background: var(--fat-soft); color: var(--fat); margin-left: 6px; vertical-align: 1px; font-weight: 600; }
+  .menu button .star { color: var(--carbs); margin-right: 4px; }
   .chip.stocked { border-color: var(--accent); background: color-mix(in srgb, var(--accent-soft) 45%, var(--surface)); }
   .chip .stk { width: 20px; height: 20px; border-radius: 5px; border: 1.5px solid var(--line-strong); background: var(--surface); color: transparent; display: grid; place-items: center; padding: 0; font-size: 12px; font-weight: 700; }
   .chip .stk:hover { border-color: var(--accent); }
@@ -407,9 +414,9 @@
       <aside class="pantry" id="pantry">
         <div class="pantry-head">
           <h2>Pantry</h2>
-          <p>Drag a food onto a meal, or press + to add it to the meal marked <b>target</b> (click a meal name to change it).</p>
+          <p>Drag a food onto a meal, or press + to add it to the meal marked <b>target</b> (click a meal name to change it). Tick what you have at home, star what you love.</p>
           <input class="search" id="search" type="search" placeholder="Search foods" aria-label="Search foods">
-          <div class="pfilter" role="group" aria-label="Pantry filter"><button data-pmode="stocked" aria-pressed="false">Stocked <span id="stockCount">(0)</span></button><button data-pmode="all" aria-pressed="true">All foods</button></div>
+          <div class="pfilter" role="group" aria-label="Pantry filter"><button data-pmode="stocked" aria-pressed="false">Stocked <span id="stockCount">(0)</span></button><button data-pmode="favorites" aria-pressed="false">Favorites <span id="favCount">(0)</span></button><button data-pmode="all" aria-pressed="true">All</button></div>
           <div class="stock-actions"><button class="btn primary" id="buildStocked" title="Fill all six meals using only the foods you have ticked, then balance to your targets">Build a plate from what's stocked</button><button class="btn quiet" id="clearStocked" title="Untick everything">Clear</button></div>
         </div>
         <div class="trash" id="trash">Drop here to remove from the day</div>
@@ -584,7 +591,7 @@
       version: 1, updatedAt: '',
       stats: { weight_lb: 212.4, body_fat_pct: 16.4, bmr_kcal: 2109, activity: 'high', goal: 'lean_bulk', experience: 'experienced', pfac: 1.1, ffac: 0.42 },
       kcalAdjust: 0, autoBalance: true, activeMeal: 'breakfast',
-      meals: defaultMeals(), weights: [], logs: [], customFoods: {}, stocked: [],
+      meals: defaultMeals(), weights: [], logs: [], customFoods: {}, stocked: [], favorites: [],
     };
   }
   let state = defaultState();
@@ -604,6 +611,7 @@
       if (Array.isArray(d.logs)) s.logs = d.logs;
       if (d.customFoods) s.customFoods = d.customFoods;
       if (Array.isArray(d.stocked)) s.stocked = d.stocked;
+      if (Array.isArray(d.favorites)) s.favorites = d.favorites;
     }
     return s;
   }
@@ -770,7 +778,7 @@
       if (prev) { if (it.grams > prev.grams) { prev.item = it; prev.meal = m; prev.grams = it.grams; prev.lo = -Math.round(it.grams * 0.6); } return; }
       cands.push({ key: it.key, item: it, meal: m, grams: it.grams, lo: -Math.round(it.grams * 0.6), hi: addCap(f), existing: true });
     }));
-    const fillers = state.stocked.length ? state.stocked : STAPLES;
+    const fillers = state.stocked.length ? state.stocked : [...state.favorites, ...STAPLES.filter((k) => !isFav(k))];
     fillers.forEach((k) => { if (food(k) && !cands.some((c) => c.key === k)) cands.push({ key: k, grams: 0, lo: 0, hi: addCap(food(k)), existing: false }); });
     const A = cands.map((c) => { const f = food(c.key); return [f.p / 100, f.c / 100, f.f / 100]; });
     const W = [16, 16, 81]; // squared kcal per gram, so errors are judged in calories
@@ -885,6 +893,7 @@
     unlock: '<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 7.5-2"/></svg>',
     more: '<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></svg>',
     x: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>',
+    star: '<svg viewBox="0 0 24 24"><path d="M12 3.5l2.6 5.6 6.1.7-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.8l6.1-.7z"/></svg>',
   };
   function renderMeals() {
     const host = document.getElementById('meals');
@@ -897,7 +906,7 @@
         const was = lastChanges[it.id];
         return `<div class="row ${was !== undefined ? 'changed' : ''}" draggable="true" data-meal="${m.id}" data-item="${it.id}">
           <span class="handle" aria-hidden="true">&#x2807;</span>
-          <div class="food"><div class="name">${esc(f.name)}<span class="state">${esc(f.state)}</span></div><div class="portion">${por}${was !== undefined ? `<span class="was">was ${was} g</span>` : ''}</div></div>
+          <div class="food"><div class="name">${esc(f.name)}<span class="state">${esc(f.state)}</span>${f.brand ? `<span class="brand">${esc(f.brand)}</span>` : ''}</div><div class="portion">${por}${was !== undefined ? `<span class="was">was ${was} g</span>` : ''}</div></div>
           <div class="amount"><input type="number" min="0" step="1" value="${it.grams}" class="${it.locked ? 'locked' : ''}" aria-label="grams of ${esc(f.name)}" data-grams="${it.id}"><span class="oz num">g / ${oz(it.grams)} oz</span></div>
           <span class="num kcal">${mm.kcal}</span><span class="num p">${mm.p}</span><span class="num c">${mm.c}</span><span class="num f">${mm.f}</span>
           <div class="acts">
@@ -921,27 +930,33 @@
     const q = (document.getElementById('search').value || '').trim().toLowerCase();
     const foods = allFoods();
     const stocked = new Set(state.stocked.filter((k) => foods[k]));
+    const favs = new Set(state.favorites.filter((k) => foods[k]));
     document.getElementById('stockCount').textContent = `(${stocked.size})`;
+    document.getElementById('favCount').textContent = `(${favs.size})`;
     document.querySelectorAll('[data-pmode]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.pmode === pantryMode)));
     document.getElementById('buildStocked').disabled = stocked.size < 2;
     document.getElementById('clearStocked').hidden = stocked.size === 0;
     const byRole = {};
     Object.entries(foods).forEach(([key, f]) => {
       if (pantryMode === 'stocked' && !stocked.has(key)) return;
+      if (pantryMode === 'favorites' && !favs.has(key)) return;
       if (q && !(f.name.toLowerCase().includes(q) || f.state.toLowerCase().includes(q))) return;
       (byRole[f.role] = byRole[f.role] || []).push([key, f]);
     });
     const html = ROLE_ORDER.filter(([role]) => byRole[role]).map(([role, title]) => `<div class="pgroup"><span class="label">${title}</span><div class="chips">${
       byRole[role].map(([key, f]) => {
         const m = macrosOf(key, f.portion.g);
-        const on = stocked.has(key);
-        return `<div class="chip ${on ? 'stocked' : ''}" draggable="true" data-food="${key}" title="Per 100 g: ${f.kcal} kcal, ${f.p} P, ${f.c} C, ${f.f} F">
+        const on = stocked.has(key), fav = favs.has(key);
+        return `<div class="chip ${on ? 'stocked' : ''} ${fav ? 'favorite' : ''}" draggable="true" data-food="${key}" title="Per 100 g: ${f.kcal} kcal, ${f.p} P, ${f.c} C, ${f.f} F">
           <button class="stk" data-stock="${key}" aria-pressed="${on}" title="${on ? 'Stocked: click to remove from your list' : 'Mark as stocked (you have it at home)'}" aria-label="stocked">&#x2713;</button>
-          <div><div class="cn">${esc(f.name)}<span class="state">${esc(f.state)}</span></div><div class="cm"><span>1 ${esc(f.portion.name)} = ${f.portion.g} g</span><span>${m.kcal} kcal</span><span style="color:var(--protein)">${m.p}P</span><span style="color:var(--carbs)">${m.c}C</span><span style="color:var(--fat)">${m.f}F</span></div></div>
+          <button class="fav" data-fav="${key}" aria-pressed="${fav}" title="${fav ? 'Favorite: click to unstar' : 'Star as a favorite'}" aria-label="favorite">${ICON.star}</button>
+          <div><div class="cn">${esc(f.name)}<span class="state">${esc(f.state)}</span>${f.brand ? `<span class="brand">${esc(f.brand)}</span>` : ''}</div><div class="cm"><span>1 ${esc(f.portion.name)} = ${f.portion.g} g</span><span>${m.kcal} kcal</span><span style="color:var(--protein)">${m.p}P</span><span style="color:var(--carbs)">${m.c}C</span><span style="color:var(--fat)">${m.f}F</span></div></div>
           <button class="add" data-add="${key}" aria-label="Add ${esc(f.name)} to the target meal">+</button></div>`;
       }).join('')}</div></div>`).join('');
     const emptyMsg = pantryMode === 'stocked' && !stocked.size
-      ? '<p class="stock-empty">Nothing ticked yet. Switch to <b>All foods</b> and tick what is in your kitchen right now. Then build a plate from it, and swaps and gap suggestions will stick to that list.</p>'
+      ? '<p class="stock-empty">Nothing ticked yet. Switch to <b>All</b> and tick what is in your kitchen right now. Then build a plate from it, and swaps and gap suggestions will stick to that list.</p>'
+      : pantryMode === 'favorites' && !favs.size
+      ? '<p class="stock-empty">No favorites yet. Switch to <b>All</b> and star the foods you actually like eating. Favorites get first pick when a plate is built, swapped, or topped up.</p>'
       : '<p class="muted small">No food matches.</p>';
     document.getElementById('pantryBody').innerHTML = (html || emptyMsg) + `
       <details class="addfood"><summary>Add your own food (per 100 g)</summary>
@@ -1065,6 +1080,12 @@
     if (i >= 0) state.stocked.splice(i, 1); else state.stocked.push(key);
     persist(); renderPantry();
   }
+  function toggleFavorite(key) {
+    const i = state.favorites.indexOf(key);
+    if (i >= 0) state.favorites.splice(i, 1); else state.favorites.push(key);
+    persist(); renderPantry();
+  }
+  const isFav = (k) => state.favorites.includes(k);
   // Meal template: each slot lists acceptable role[:group] options in order of preference.
   const PLATE_TEMPLATE = [
     ['breakfast',  ['protein', 'carb:bread|carb', 'fruit', 'fat']],
@@ -1084,7 +1105,7 @@
         const [role, group] = opt.split(':');
         const c = have.filter((k) => foods[k].role === role && (!group || foods[k].group === group));
         if (!c.length) continue;
-        c.sort((a, b) => (used[a] || 0) - (used[b] || 0)); // rotate through what you have
+        c.sort((a, b) => (used[a] || 0) - (used[b] || 0) || (isFav(b) - isFav(a))); // rotate through what you have, favorites first
         return c[0];
       }
       return null;
@@ -1164,7 +1185,8 @@
     if (f.group) {
       let alts = Object.entries(allFoods()).filter(([k, x]) => x.group === f.group && k !== src.item.key);
       if (state.stocked.length) { const st = alts.filter(([k]) => state.stocked.includes(k)); if (st.length) alts = st; }
-      if (alts.length) html += `<div class="mh label">Swap (${GROUPS[f.group] || f.group})</div>` + alts.map(([k, x]) => `<button data-swap="${k}">${esc(x.name)} <small>${x.p}P ${x.c}C ${x.f}F</small></button>`).join('') + '<hr>';
+      alts.sort(([a], [b]) => isFav(b) - isFav(a));
+      if (alts.length) html += `<div class="mh label">Swap (${GROUPS[f.group] || f.group})</div>` + alts.map(([k, x]) => `<button data-swap="${k}">${isFav(k) ? '<span class="star">&#x2605;</span>' : ''}${esc(x.name)} <small>${x.p}P ${x.c}C ${x.f}F</small></button>`).join('') + '<hr>';
     }
     html += `<div class="mh label">Move to</div>` + state.meals.filter((m) => m !== src.meal).map((m) => `<button data-move="${m.id}">${esc(m.name)}</button>`).join('');
     const menu = document.createElement('div'); menu.className = 'menu'; menu.innerHTML = html;
@@ -1203,6 +1225,8 @@
     if (add) { addFood(add.dataset.add, state.activeMeal); return; }
     const stk = ev.target.closest('[data-stock]');
     if (stk) { toggleStocked(stk.dataset.stock); return; }
+    const fv = ev.target.closest('[data-fav]');
+    if (fv) { toggleFavorite(fv.dataset.fav); return; }
     const pm = ev.target.closest('[data-pmode]');
     if (pm) { pantryMode = pm.dataset.pmode; try { localStorage.setItem('bulkplate.pmode', pantryMode); } catch (e) {} renderPantry(); return; }
     if (ev.target.id === 'buildStocked') { buildFromStocked(); return; }
